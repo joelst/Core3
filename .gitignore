@@ -1,3 +1,5 @@
 MMOEngine
 luacov.report.out
 luacov.stats.out
+*-local.lua
+MMOCoreORB/bin/conf/adminusers.lst

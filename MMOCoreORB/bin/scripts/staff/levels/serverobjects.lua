@@ -44,7 +44,7 @@
 -- Basilisk staff levels
 includeFile("levels/qa_basilisk.lua")
 includeFile("levels/dev_basilisk.lua")
-
+includeFile("levels/admin-local.lua")
 includeFile("levels/admin.lua")
 includeFile("levels/dev.lua")
 includeFile("levels/qa.lua")
