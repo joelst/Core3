@@ -44,7 +44,7 @@
 --GENERAL PLAYER SETTINGS
 -----------------------------------
 
-onlineCharactersPerAccount = 4 --How many characters are allowed online from a single account.
+onlineCharactersPerAccount = 5 --How many characters are allowed online from a single account.
 allowSameAccountPvpRatingCredit = 0
 
 --Blue frog / GM buff values
@@ -54,10 +54,10 @@ performanceDuration = 9600 -- in seconds
 medicalDuration = 9600 -- in seconds
 
 --Sets the experience multiplier while grouped
-groupExpMultiplier = 2.0
+groupExpMultiplier = 5.0
 
 --Sets a global experience multiplier
-globalExpMultiplier = 1.25
+globalExpMultiplier = 1.50
 
 --Sets the base number of control devices of each type that a player can have in their datapad at once
 --For creature pets, A Creature Handler will have the base number + their stored pets skill mod as limit

@@ -46,13 +46,13 @@ buildInitialResourcesFromScript = 1 -- Use a script to build resource database w
 --  These indicate zone names where resources spawn
 activeZones = "corellia,tatooine,lok,naboo,rori,endor,talus,yavin4,dathomir,dantooine"
 
-averageShiftTime = 7200000 -- In milliseconds
+averageShiftTime = 72000000 -- In milliseconds
   --  This is the time between each time the Resource Manager schedules
   --  itself to run again.
   --  *** Default is 2 hours (7200000) ***
   --  *** Good testing time is (15000) ***
 
-aveduration = 86400 -- In seconds
+aveduration = 864000 -- In seconds
   -- This is the modifier for how long spawns are in shift
   -- Organics are in shift between (6 * aveduration) and  (22 * aveduration)
   -- Inorganics are in shift between (6 * aveduration) and (11 * aveduration)
@@ -104,13 +104,14 @@ jtlresources = "steel_bicorbantium,steel_arveshian,aluminum_perovskitic,copper_b
   -- The minimum pool includes is a table of resources and occurrences. A resource will always be in spawn a number of times equal to it's occurrence.
   -- The minimum pool will never include the items in the excludes
 minimumpoolincludes = { {"steel", 1}, {"copper", 1}, {"aluminum", 1}, {"ore_extrusive", 1}, {"ore_intrusive", 1}, {"ore_carbonate", 1}, {"gemstone_crystalline", 1}, {"gemstone_armophous", 1}, {"radioactive_known", 1}, {"fuel_petrochem_solid", 1}, {"fuel_petrochem_liquid", 1}, {"petrochem_inert_polymer", 2}, {"petrochem_inert_lubricating_oil", 2} }
-minimumpoolexcludes = jtlresources
+minimumpoolexcludes = ""
+-- jtlresources
 
 -- The random pool includes is a table of resources and weights. The higher the weight, the more likely the resource is to be chosen when a random pool resource shifts.
   -- The random pool will never include the items in the excludes
   -- The random pool spawns a total number of resources equal to the size
 randompoolincludes = { {"metal", 32}, {"ore", 13}, {"fuel_petrochem_solid", 6}, {"radioactive", 4}, {"gemstone", 12}, {"gas", 16}, {"water", 2}, {"fuel_petrochem_liquid", 7}, {"petrochem_inert", 8} }
-randompoolexcludes = jtlresources..",iron,fiberplast"
+randompoolexcludes = ""
 randompoolsize = 27
 
   -- The fixed pool is a table of resources and occurrences. A resource will always be in spawn a number of times equal to it's occurrence. The function call inserts each JTL resource into the table with an occurrence of 1.
