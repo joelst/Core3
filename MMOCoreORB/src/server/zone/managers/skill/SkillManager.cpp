@@ -334,8 +334,7 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 
 		const SkillList* list = creature->getSkillList();
 
-// This should not be hardcoded, it should be handled by constant
-		int totalSkillPointsWasted = 450;
+		int totalSkillPointsWasted = 500;
 
 		for (int i = 0; i < list->size(); ++i) {
 			Skill* skill = list->get(i);
@@ -495,7 +494,7 @@ bool SkillManager::surrenderSkill(const String& skillName, CreatureObject* creat
 
 		const SkillList* list = creature->getSkillList();
 
-		int totalSkillPointsWasted = 450;
+		int totalSkillPointsWasted = 500;
 
 		for (int i = 0; i < list->size(); ++i) {
 			Skill* skill = list->get(i);
