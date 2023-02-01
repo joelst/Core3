@@ -4,6 +4,7 @@
  */
 
 #include "SkillManager.h"
+#include "LuaSkillManager.h"
 #include "SkillModManager.h"
 #include "PerformanceManager.h"
 #include "server/zone/objects/creature/variables/Skill.h"
@@ -334,7 +335,7 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 
 		const SkillList* list = creature->getSkillList();
 
-		int totalSkillPointsWasted = 500;
+		int totalSkillPointsWasted = lua->getGlobalInt("skillPoints")
 
 		for (int i = 0; i < list->size(); ++i) {
 			Skill* skill = list->get(i);
@@ -494,7 +495,7 @@ bool SkillManager::surrenderSkill(const String& skillName, CreatureObject* creat
 
 		const SkillList* list = creature->getSkillList();
 
-		int totalSkillPointsWasted = 500;
+		int totalSkillPointsWasted = lua->getGlobalInt("skillPoints");
 
 		for (int i = 0; i < list->size(); ++i) {
 			Skill* skill = list->get(i);
