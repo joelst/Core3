@@ -271,10 +271,10 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 	ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
 
 	if (ghost != nullptr) {
-		//Withdraw skill points.
+		// Withdraw skill points.
 		ghost->addSkillPoints(-skill->getSkillPointsRequired());
 
-		//Witdraw experience.
+		// Remove experience.
 		if (!noXpRequired) {
 			TransactionLog trxExperience(TrxCode::EXPERIENCE, creature);
 			trxExperience.groupWith(trx);
@@ -335,18 +335,19 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 
 		const SkillList* list = creature->getSkillList();
 
-		int totalSkillPointsWasted = getGlobalInt("skillPoints");
+		// Setting higher than what is set in lua. Need to set this globally instead of twice in the same file.
+		// int totalSkillPointsWasted = 1000;
 
-		for (int i = 0; i < list->size(); ++i) {
-			Skill* skill = list->get(i);
+		// for (int i = 0; i < list->size(); ++i) {
+		// 	Skill* skill = list->get(i);
 
-			totalSkillPointsWasted -= skill->getSkillPointsRequired();
-		}
+		// 	totalSkillPointsWasted -= skill->getSkillPointsRequired();
+		// }
 
-		if (ghost->getSkillPoints() != totalSkillPointsWasted) {
-			creature->error("skill points mismatch calculated: " + String::valueOf(totalSkillPointsWasted) + " found: " + String::valueOf(ghost->getSkillPoints()));
-			ghost->setSkillPoints(totalSkillPointsWasted);
-		}
+		// if (ghost->getSkillPoints() != totalSkillPointsWasted) {
+		// 	creature->error("skill points mismatch: " + String::valueOf(totalSkillPointsWasted) + " found: " + String::valueOf(ghost->getSkillPoints()));
+		// 	ghost->setSkillPoints(totalSkillPointsWasted);
+		// }
 
 		if (playerManager != nullptr) {
 			creature->setLevel(playerManager->calculatePlayerLevel(creature));
@@ -448,7 +449,7 @@ bool SkillManager::surrenderSkill(const String& skillName, CreatureObject* creat
 	}
 
 	if (ghost != nullptr) {
-		//Give the player the used skill points back.
+		// Give the player the used skill points back.
 		ghost->addSkillPoints(skill->getSkillPointsRequired());
 
 		//Remove abilities but only if the creature doesn't still have a skill that grants the
@@ -495,18 +496,18 @@ bool SkillManager::surrenderSkill(const String& skillName, CreatureObject* creat
 
 		const SkillList* list = creature->getSkillList();
 
-		int totalSkillPointsWasted = getGlobalInt("skillPoints");
+		// int totalSkillPointsWasted = 1000;
 
-		for (int i = 0; i < list->size(); ++i) {
-			Skill* skill = list->get(i);
+		// for (int i = 0; i < list->size(); ++i) {
+		// 	Skill* skill = list->get(i);
 
-			totalSkillPointsWasted -= skill->getSkillPointsRequired();
-		}
+		// 	totalSkillPointsWasted -= skill->getSkillPointsRequired();
+		// }
 
-		if (ghost->getSkillPoints() != totalSkillPointsWasted) {
-			creature->error("skill points mismatch calculated: " + String::valueOf(totalSkillPointsWasted) + " found: " + String::valueOf(ghost->getSkillPoints()));
-			ghost->setSkillPoints(totalSkillPointsWasted);
-		}
+		// if (ghost->getSkillPoints() != totalSkillPointsWasted) {
+		// 	creature->error("skill points mismatch: " + String::valueOf(totalSkillPointsWasted) + " found: " + String::valueOf(ghost->getSkillPoints()));
+		// 	ghost->setSkillPoints(totalSkillPointsWasted);
+		// }
 
 		ManagedReference<PlayerManager*> playerManager = creature->getZoneServer()->getPlayerManager();
 		if (playerManager != nullptr) {
