@@ -335,7 +335,7 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 
 		const SkillList* list = creature->getSkillList();
 
-		int totalSkillPointsWasted = lua->getGlobalInt("skillPoints")
+		int totalSkillPointsWasted = getGlobalInt("skillPoints");
 
 		for (int i = 0; i < list->size(); ++i) {
 			Skill* skill = list->get(i);
@@ -495,7 +495,7 @@ bool SkillManager::surrenderSkill(const String& skillName, CreatureObject* creat
 
 		const SkillList* list = creature->getSkillList();
 
-		int totalSkillPointsWasted = lua->getGlobalInt("skillPoints");
+		int totalSkillPointsWasted = getGlobalInt("skillPoints");
 
 		for (int i = 0; i < list->size(); ++i) {
 			Skill* skill = list->get(i);
