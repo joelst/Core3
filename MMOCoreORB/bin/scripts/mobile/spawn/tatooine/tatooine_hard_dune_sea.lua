@@ -6,7 +6,7 @@ tatooine_hard_dune_sea = {
 			minDifficulty = 1,
 			maxDifficulty = 500,
 			numberToSpawn = 15,
-			weighting = 200,
+			weighting = 50,
 			size = 25,
 		},
 		{
@@ -24,7 +24,7 @@ tatooine_hard_dune_sea = {
 			minDifficulty = 300,
 			maxDifficulty = 500,
 			numberToSpawn = 15,
-			weighting = 200,
+			weighting = 25,
 			size = 25,
 		},
 		{
