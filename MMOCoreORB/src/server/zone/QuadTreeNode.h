@@ -3,8 +3,8 @@
  Distribution of this file for usage outside of Core3 is prohibited.
  */
 
-#ifndef ZONETREENODE_H_
-#define ZONETREENODE_H_
+#ifndef ZONEQUADTREENODE_H_
+#define ZONEQUADTREENODE_H_
 
 /*
  Quad tree interface
@@ -45,40 +45,36 @@ namespace server {
 namespace zone {
 
 class QuadTree;
-class OctTree;
-class TreeEntry;
-class TreeEntryImplementation;
+class QuadTreeEntry;
+class QuadTreeEntryImplementation;
 
-class TreeNode: public Object {
-	SortedVector<Reference<TreeEntry*> > objects;
+class QuadTreeNode: public Object {
+	SortedVector<Reference<QuadTreeEntry*> > objects;
 
-	WeakReference<TreeNode*> parentNode;
-	Reference<TreeNode*> nwNode;
-	Reference<TreeNode*> neNode;
-	Reference<TreeNode*> swNode;
-	Reference<TreeNode*> seNode;
-	Reference<TreeNode*> nwNode2;
-	Reference<TreeNode*> neNode2;
-	Reference<TreeNode*> swNode2;
-	Reference<TreeNode*> seNode2;
+	WeakReference<QuadTreeNode*> parentNode;
+	Reference<QuadTreeNode*> nwNode;
+	Reference<QuadTreeNode*> neNode;
+	Reference<QuadTreeNode*> swNode;
+	Reference<QuadTreeNode*> seNode;
 
-	float minX, minY, minZ;
-	float maxX, maxY, maxZ;
+	float minX, minY;
+	float maxX, maxY;
 
-	float dividerX, dividerY, dividerZ;
+	float dividerX, dividerY;
 
 public:
-	TreeNode();
-	TreeNode(float minx, float miny, float minz, float maxx, float maxy, float maxz, TreeNode *parent);
-	TreeNode(float minx, float miny, float maxx, float maxy, TreeNode *parent);
-	~TreeNode();
+	QuadTreeNode();
+	QuadTreeNode(float minx, float miny, float maxx, float maxy,
+			QuadTreeNode *parent);
+
+	~QuadTreeNode();
 
 	Object* clone() {
-		return ObjectCloner<TreeNode>::clone(this);
+		return ObjectCloner<QuadTreeNode>::clone(this);
 	}
 
 	Object* clone(void* object) {
-		return TransactionalObjectCloner<TreeNode>::clone(this);
+		return TransactionalObjectCloner<QuadTreeNode>::clone(this);
 	}
 
 	void free() {
@@ -86,36 +82,29 @@ public:
 	}
 
 	// Add a object to this node
-	void addObject(TreeEntry *obj);
+	void addObject(QuadTreeEntry *obj);
 
-	TreeEntry* getObject(int index) {
+	QuadTreeEntry* getObject(int index) {
 		return objects.get(index);
 	}
 
 	// Remove a object by GUID
-	void removeObject(TreeEntry *obj);
+	void removeObject(QuadTreeEntry *obj);
 
 	void removeObject(int index);
 
 	// Approximative test if a circle with center in x,y and
 	// given radius crosses this node.
-	bool testInRange(float x, float y, float z, float range) const;
-
 	bool testInRange(float x, float y, float range) const;
 
 	// Check if this node makes any sense to exist
 	void check();
 
 	bool validateNode() const {
-		if (dividerZ != -1) {
-			if (minX > maxX || minY > maxY || minZ > maxZ) {
-				return false;
-			}
-		} else if (minX > maxX || minY > maxY) {
+		if (minX > maxX || minY > maxY/* || objects.size() > 1000*/)
 			return false;
-		}
-
-		return true;
+		else
+			return true;
 	}
 
 	// Check if this node has any associated objects
@@ -126,33 +115,25 @@ public:
 	// Check if this node has children nodes
 	inline bool hasSubNodes() const {
 		return nwNode != nullptr || neNode != nullptr || swNode != nullptr || seNode
-			!= nullptr || nwNode2 != nullptr || neNode2 != nullptr || swNode2 != nullptr || seNode2 != nullptr;
+				!= nullptr;
 	}
 
 	// Test if the point is inside this node
-	inline bool testInside(float x, float y, float z) const {
-		return x >= minX && x < maxX && y >= minY && y < maxY && z >= minZ && z < maxZ;
-	}
-
 	inline bool testInside(float x, float y) const {
 		return x >= minX && x < maxX && y >= minY && y < maxY;
 	}
 
-	// Test if the object is inside this quad tree node
-	bool testInsideQuadTree(TreeEntry* obj) const;
+	// Test if the object is inside this node
+	bool testInside(QuadTreeEntry* obj) const;
 
-	// Test if the object is inside this oct tree node
-	bool testInsideOctTree(TreeEntry* obj) const;
-
-	String toStringData();
+	String toStringData() const;
 
 	friend class server::zone::QuadTree;
-	friend class server::zone::OctTree;
-	friend class server::zone::TreeEntryImplementation;
+	friend class server::zone::QuadTreeEntryImplementation;
 };
 
 } // namespace server
 } // namespace zone
 
 
-#endif /*ZONETREENODE_H_*/
+#endif /*QUADTREENODE_H_*/

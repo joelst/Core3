@@ -25,7 +25,7 @@ namespace server {
 using namespace server::zone;
 using namespace server::zone::objects::area;
 
-class ZoneContainerComponent : public ContainerComponent, public Logger {
+class ZoneContainerComponent : public ContainerComponent {
 protected:
 	bool insertActiveArea(Zone* zone, ActiveArea* activeArea) const;
 	bool removeActiveArea(Zone* zone, ActiveArea* activeArea) const;

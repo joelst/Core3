@@ -1,8 +1,12 @@
+/*
+Copyright (C) 2007 <SWGEmu>. All rights reserved.
+Distribution of this file for usage outside of Core3 is prohibited.
+*/
+
 package server.zone;
 
 include system.lang.ref.Reference;
 include system.lang.Math;
-include system.lang.Object;
 include system.util.SortedVector;
 
 include server.zone.CloseObjectsVector;
@@ -13,31 +17,30 @@ import engine.util.Observable;
 
 import engine.util.u3d.Vector3;
 include engine.util.u3d.Coordinate;
-include server.zone.TreeNode;
+import server.zone.QuadTreeNode;
 
-@dirty
-class TreeEntry extends Observable {
-
-	public native TreeEntry(TreeNode n = null);
-
+@json
+class QuadTreeEntry extends Observable {
 	@dereferenced
 	protected Coordinate coordinates;
 
-	public TreeNode node;
+	transient protected QuadTreeNode node;
 
 	protected boolean bounding;
 
 	@weakReference
-	protected TreeEntry parent;
+	protected QuadTreeEntry parent;
 
 	transient protected CloseObjectsVector closeobjects;
 
 	protected float radius;
 
+	public native QuadTreeEntry(QuadTreeNode n = null);
+
 	protected transient int receiverFlags;
 
 	@dirty
-	public void addInRangeObject(TreeEntry obj, boolean doNotifyUpdate = true) {
+	public void addInRangeObject(QuadTreeEntry obj, boolean doNotifyUpdate = true) {
 		//System::out << "adding in range object:" << obj << "\n";
 
 		if (closeobjects.put(obj) != -1) {
@@ -48,12 +51,12 @@ class TreeEntry extends Observable {
 	}
 
 	/*@read
-	public TreeEntry getInRangeObject(int index) {
+	public QuadTreeEntry getInRangeObject(int index) {
 		return closeobjects.get(index);
 	}*/
 
 	@dirty
-	public void removeInRangeObject(TreeEntry obj, boolean notifyDisappear = true) {
+	public void removeInRangeObject(QuadTreeEntry obj, boolean notifyDisappear = true) {
 		//System::out << "droping in range object:" << obj << "\n";
 
 		if (closeobjects.drop(obj) && notifyDisappear) {
@@ -61,7 +64,7 @@ class TreeEntry extends Observable {
 		}
 
 		/*else {
-			TreeEntry* obj2 = NULL;
+			QuadTreeEntry* obj2 = NULL;
 			obj2->getPositionX();
 
 			System::out << hex << "[0x" << obj->objectID << "] was not found in close objects for [0x"
@@ -87,35 +90,22 @@ class TreeEntry extends Observable {
 		closeobjects.removeAll();
 	}
 
-
 	/*@read
-	public boolean containsInRangeObject(TreeEntry obj) {
+	public boolean containsInRangeObject(QuadTreeEntry obj) {
 		return closeobjects.contains(obj);
 	}*/
 
 	@dirty
-	public abstract boolean isInRange(TreeEntry obj, float range) {
-		return isInRange(obj.getPositionX(), obj.getPositionY(), obj.getPositionZ(), range);
+	public abstract boolean isInRange(QuadTreeEntry obj, float range) {
+		return isInRange(obj.getPositionX(), obj.getPositionY(), range);
 	}
 
 	@read
 	public native abstract float getOutOfRangeDistance();
 
 	@dirty
-	public abstract boolean isInRange(float x, float y, float z, float range) {
-		int rangesq = range * range;
-
-		float deltaX = x - coordinates.getPositionX();
-		float deltaY = y - coordinates.getPositionY();
-		float deltaZ = z - coordinates.getPositionZ();
-		float deltaCalc = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
-
-		return deltaCalc <= rangesq;
-	}
-
-	@dirty
 	public abstract boolean isInRange(float x, float y, float range) {
-		float rangesq = range * range;
+	 	float rangesq = range * range;
 
 		float deltaX = x - coordinates.getPositionX();
 		float deltaY = y - coordinates.getPositionY();
@@ -127,14 +117,12 @@ class TreeEntry extends Observable {
 	}
 
 	@read
-	public float getDistanceTo(TreeEntry obj) {
+	public float getDistanceTo(QuadTreeEntry obj) {
 		float x = obj.getPositionX();
 		float y = obj.getPositionY();
-		float z = obj.getPositionZ();
 
 		float deltaX = x - coordinates.getPositionX();
 		float deltaY = y - coordinates.getPositionY();
-		float deltaZ = z - coordinates.getPositionZ();
 
 		return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 	}
@@ -147,71 +135,48 @@ class TreeEntry extends Observable {
 
 	@dirty
 	@weakReference
-	public TreeEntry getParent() {
+	public QuadTreeEntry getParent() {
 		return parent;
 	}
 
 	@dirty
-	public native TreeEntry getParentUnsafe();
+	public native QuadTreeEntry getParentUnsafe();
 
 	@dirty
-	public native TreeEntry getRootParentUnsafe();
+	public native QuadTreeEntry getRootParentUnsafe();
 
-	@dirty
-	public abstract native boolean containsPoint(float x, float y, float z);
-
-	@dirty
+	@read
 	public abstract native boolean containsPoint(float x, float y);
 
 	@dirty
-	public native TreeEntry getRootParent();
+	public native QuadTreeEntry getRootParent();
 
 	@read
 	@local
-	public native boolean isInSWArea(TreeNode node);
+	public native boolean isInSWArea(QuadTreeNode node);
 
 	@read
 	@local
-	public native boolean isInSEArea(TreeNode node);
+	public native boolean isInSEArea(QuadTreeNode node);
 
 	@read
 	@local
-	public native boolean isInNWArea(TreeNode node);
+	public native boolean isInNWArea(QuadTreeNode node);
 
 	@read
 	@local
-	public native boolean isInNEArea(TreeNode node);
-
-	@read
-	@local
-	public native boolean isInSW2Area(TreeNode node);
-
-	@read
-	@local
-	public native boolean isInSE2Area(TreeNode node);
-
-	@read
-	@local
-	public native boolean isInNW2Area(TreeNode node);
-
-	@read
-	@local
-	public native boolean isInNE2Area(TreeNode node);
-
-	@read
-	@local
-	public native boolean isInArea(TreeNode node);
+	public native boolean isInArea(QuadTreeNode node);
 
 	@dirty
-	public abstract void notifyInsert(TreeEntry obj) {
+	public abstract void notifyInsert(QuadTreeEntry obj) {
 	}
 
 	@dirty
-	public abstract void notifyPositionUpdate(TreeEntry obj) {
+	public abstract void notifyPositionUpdate(QuadTreeEntry obj) {
 	}
 
 	@dirty
-	public abstract void notifyDissapear(TreeEntry obj) {
+	public abstract void notifyDissapear(QuadTreeEntry obj) {
 	}
 
 	@read
@@ -269,25 +234,20 @@ class TreeEntry extends Observable {
 
 	@nativeStub
 	@dirty
-	public native abstract int compareTo(TreeEntry obj);
+	public native abstract int compareTo(QuadTreeEntry obj);
 
-	@read
+	@dirty
 	public abstract int registerToCloseObjectsReceivers() {
-		return receiverFlags;
+	    return receiverFlags;
 	}
 
 	@read
 	public abstract int getReceiverFlags() {
-		return receiverFlags;
+	    return receiverFlags;
 	}
 
 	@read
 	public boolean isInQuadTree() {
-		return node;
-	}
-
-	@read
-	public boolean isInOctTree() {
 		return node;
 	}
 
@@ -299,7 +259,7 @@ class TreeEntry extends Observable {
 	@reference
 	@read
 	@local
-	public TreeNode getNode() {
+	public QuadTreeNode getNode() {
 		return node;
 	}
 
@@ -318,7 +278,7 @@ class TreeEntry extends Observable {
 	public abstract native unsigned long getObjectID();
 
 	@read
-	public float getRadius() {
+	public abstract float getRadius() {
 		return radius;
 	}
 
@@ -328,7 +288,7 @@ class TreeEntry extends Observable {
 	}
 
 	@local
-	public native void setNode(TreeNode n);
+	public native void setNode(QuadTreeNode n);
 
 	public void setBounding() {
 		bounding = true;
@@ -343,7 +303,7 @@ class TreeEntry extends Observable {
 	}
 
 	@dirty
-	public abstract void setParent(TreeEntry par) {
+	public abstract void setParent(QuadTreeEntry par) {
 		parent = par;
 	}
 }

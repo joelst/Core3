@@ -23,7 +23,6 @@ import server.zone.ZoneProcessServer;
 import server.zone.ZoneClientSession;
 import server.zone.ZoneHandler;
 import server.zone.Zone;
-import server.zone.SpaceZone;
 import server.chat.ChatManager;
 import conf.ConfigManager;
 import server.zone.managers.object.ObjectManager;
@@ -59,7 +58,6 @@ class ZoneServer extends ManagedService implements Logger {
 	private transient ZoneProcessServer processor;
 
 	private transient VectorMap<string, Zone> zones;
-	private transient VectorMap<string, SpaceZone> spaceZones;
 
 	private transient ObjectManager objectManager;
 	private PlayerManager playerManager;
@@ -123,7 +121,6 @@ class ZoneServer extends ManagedService implements Logger {
 	// The range of objects kept within closeObjects vectors.
 	// Changing this will have a large impact on performance.
 	public static final float CLOSEOBJECTRANGE = 192;
-	public static final float SPACEOBJECTRANGE = 10240;
 
 	public native ZoneServer(ConfigManager config);
 
@@ -142,8 +139,6 @@ class ZoneServer extends ManagedService implements Logger {
 	public native void startManagers();
 
 	public native void startZones();
-
-	public native void startSpaceZones();
 
 	public native void stopManagers();
 
@@ -281,19 +276,9 @@ class ZoneServer extends ManagedService implements Logger {
 	@read
 	public Zone getZone(final string terrainName) {
 		if (!zones)
-			return null;
+		    return null;
 
 		return zones.get(terrainName);
-	}
-
-	@read
-	public Zone getGroundZone(final string terrainName) {
-		return zones.get(terrainName);
-	}
-
-	@read
-	public SpaceZone getSpaceZone(final string terrainName) {
-		return spaceZones.get(terrainName);
 	}
 
 	/**
@@ -315,22 +300,6 @@ class ZoneServer extends ManagedService implements Logger {
 		    return 0;
 
 		return zones.size();
-	}
-
-	@dirty
-	public SpaceZone getSpaceZone(int idx) {
-		if (!spaceZones)
-			return null;
-
-		return spaceZones.get(idx);
-	}
-
-	@read
-	public int getSpaceZoneCount() {
-		if (!spaceZones)
-			return 0;
-
-		return spaceZones.size();
 	}
 
 	@read

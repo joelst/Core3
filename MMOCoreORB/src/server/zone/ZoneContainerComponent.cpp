@@ -35,7 +35,7 @@ bool ZoneContainerComponent::insertActiveArea(Zone* newZone, ActiveArea* activeA
 		//StackTrace::printStackTrace();
 	}
 
-	activeArea->setGroundZone(newZone);
+	activeArea->setZone(newZone);
 
 	auto areaTree = newZone->getActiveAreaTree();
 
@@ -44,7 +44,7 @@ bool ZoneContainerComponent::insertActiveArea(Zone* newZone, ActiveArea* activeA
 	//regionTree->inRange(activeArea, 512);
 
 	// lets update area to the in range players
-	SortedVector<TreeEntry*> objects;
+	SortedVector<QuadTreeEntry*> objects;
 	float range = activeArea->getRadius() + 64;
 
 	newZone->getInRangeObjects(activeArea->getPositionX(), activeArea->getPositionY(), range, &objects, false);
@@ -104,8 +104,8 @@ bool ZoneContainerComponent::removeActiveArea(Zone* zone, ActiveArea* activeArea
 
 	areaTree->remove(activeArea);
 
-	// Remove active area from in range objects
-	SortedVector<TreeEntry*> objects;
+	// lets remove the in range active areas of players
+	SortedVector<QuadTreeEntry*> objects;
 	float range = activeArea->getRadius() + 64;
 
 	zone->getInRangeObjects(activeArea->getPositionX(), activeArea->getPositionY(), range, &objects, false);
@@ -141,7 +141,7 @@ bool ZoneContainerComponent::removeActiveArea(Zone* zone, ActiveArea* activeArea
 
 	activeArea->notifyObservers(ObserverEventType::OBJECTREMOVEDFROMZONE, nullptr, 0);
 
-	activeArea->setGroundZone(nullptr);
+	activeArea->setZone(nullptr);
 
 	return true;
 }
@@ -161,6 +161,7 @@ bool ZoneContainerComponent::transferObject(SceneObject* sceneObject, SceneObjec
 
 	if (object->isInQuadTree() && newZone != zone) {
 		object->error("trying to insert to zone an object that is already in a different quadtree");
+
 		object->destroyObjectFromWorld(true);
 
 		return false;
@@ -197,7 +198,7 @@ bool ZoneContainerComponent::transferObject(SceneObject* sceneObject, SceneObjec
 		object->setParent(nullptr, false);
 	}
 
-	object->setGroundZone(newZone);
+	object->setZone(newZone);
 	zone = newZone;
 
 	zone->addSceneObject(object);
@@ -213,20 +214,8 @@ bool ZoneContainerComponent::transferObject(SceneObject* sceneObject, SceneObjec
 	zone->inRange(object, ZoneServer::CLOSEOBJECTRANGE);
 
 	TangibleObject* tanoObject = object->asTangibleObject();
-
 	if (tanoObject != nullptr) {
 		zone->updateActiveAreas(tanoObject);
-
-		if (tanoObject->isPlayerCreature()) {
-			CreatureObject* player = tanoObject->asCreatureObject();
-
-			if (player != nullptr) {
-				if (player->hasState(CreatureState::PILOTINGSHIP))
-					player->clearState(CreatureState::PILOTINGSHIP);
-				else if (player->hasState(CreatureState::PILOTINGPOBSHIP))
-					player->clearState(CreatureState::PILOTINGPOBSHIP);
-			}
-		}
 	} else if (object->isStaticObjectClass()) {
 		// hack to get around notifyEnter/Exit only working with tangible objects
 		Vector3 worldPos = object->getWorldPosition();
@@ -268,6 +257,7 @@ bool ZoneContainerComponent::transferObject(SceneObject* sceneObject, SceneObjec
 	return true;
 }
 
+
 bool ZoneContainerComponent::removeObject(SceneObject* sceneObject, SceneObject* object, SceneObject* destination, bool notifyClient) const {
 	Zone* zone = dynamic_cast<Zone*>(sceneObject);
 
@@ -296,19 +286,19 @@ bool ZoneContainerComponent::removeObject(SceneObject* sceneObject, SceneObject*
 		auto closeObjects = object->getCloseObjects();
 
 		if (closeObjects != nullptr) {
-			SortedVector<ManagedReference<TreeEntry*> > closeSceneObjects;
+			SortedVector<ManagedReference<QuadTreeEntry*> > closeSceneObjects;
 
 			ZoneComponent::removeAllObjectsFromCOV(closeObjects, closeSceneObjects, sceneObject, object);
 		} else {
 #ifdef COV_DEBUG
 			object->info("Null closeobjects vector in ZoneContainerComponent::removeObject", true);
 #endif
-			SortedVector<ManagedReference<TreeEntry*> > closeSceneObjects;
+			SortedVector<ManagedReference<QuadTreeEntry*> > closeSceneObjects;
 
 			zone->getInRangeObjects(object->getPositionX(), object->getPositionY(), 512, &closeSceneObjects, false);
 
 			for (int i = 0; i < closeSceneObjects.size(); ++i) {
-				TreeEntry* obj = closeSceneObjects.get(i);
+				QuadTreeEntry* obj = closeSceneObjects.get(i);
 
 				if (obj != nullptr && obj != object && obj->getCloseObjects() != nullptr)
 					obj->removeInRangeObject(object);
@@ -393,7 +383,7 @@ bool ZoneContainerComponent::removeObject(SceneObject* sceneObject, SceneObject*
 
 	object->notifyRemoveFromZone();
 
-	object->setGroundZone(nullptr);
+	object->setZone(nullptr);
 
 	return true;
 }
