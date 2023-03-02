@@ -5,9 +5,6 @@
 #ifndef NPCCONVERSATIONSELECTCOMMAND_H_
 #define NPCCONVERSATIONSELECTCOMMAND_H_
 
-#include "server/zone/objects/scene/SceneObject.h"
-#include "server/zone/objects/ship/SpaceStationObject.h"
-
 class NpcConversationSelectCommand : public QueueCommand {
 public:
 
@@ -31,7 +28,7 @@ public:
 		PlayerObject* ghost = player->getPlayerObject();
 
 		uint64 conversationCreatureOid = ghost->getConversatingCreature();
-		ManagedReference<SceneObject*> object = server->getZoneServer()->getObject(conversationCreatureOid).castTo<SceneObject*>();
+		ManagedReference<CreatureObject*> object = server->getZoneServer()->getObject(conversationCreatureOid).castTo<CreatureObject*>();
 
 		if (object != nullptr) {
 			int option = Integer::valueOf(arguments.toString());
@@ -42,10 +39,8 @@ public:
 				ValidatedPosition* validPosition = ghost->getLastValidatedPosition();
 				uint64 parentid = validPosition->getParent();
 
-				if (object->isCreatureObject()) {
-					if (parentid != object->getParentID())
-						return TOOFAR;
-				}
+				if (parentid != object->getParentID())
+					return TOOFAR;
 
 				Vector3 vec = validPosition->getWorldPosition(server->getZoneServer());
 
@@ -53,12 +48,6 @@ public:
 					object->selectConversationOption(option, player);
 
 					object->notifyObservers(ObserverEventType::SELECTCONVERSATION, creature, option);
-
-				} else if (object->isSpaceStationObject()) {
-					object->selectConversationOption(option, player);
-
-					object->notifyObservers(ObserverEventType::SELECTCONVERSATION, creature, option);
-
 				} else {
 					return TOOFAR;
 				}

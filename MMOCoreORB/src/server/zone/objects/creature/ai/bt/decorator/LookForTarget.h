@@ -61,7 +61,7 @@ public:
 		if (vec == nullptr)
 			return FAILURE;
 
-		SortedVector<TreeEntry* > closeObjects;
+		SortedVector<QuadTreeEntry* > closeObjects;
 		vec->safeCopyReceiversTo(closeObjects, CloseObjectsVector::CREOTYPE);
 
 		// Shuffle closeobjects to randomize target checks

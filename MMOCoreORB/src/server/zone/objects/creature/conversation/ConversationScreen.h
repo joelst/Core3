@@ -167,7 +167,7 @@ public:
 	 * @param player The player receiving the message.
 	 * @param npc The npc the player is talking to.
 	 */
-	void sendTo(CreatureObject* player, SceneObject* npc) {
+	void sendTo(CreatureObject* player, CreatureObject* npc) {
 		NpcConversationMessage* message;
 
 		if (customText.isEmpty())
@@ -190,10 +190,8 @@ public:
 		player->sendMessage(message);
 		player->sendMessage(optionsList);
 
-		CreatureObject* creo = npc->asCreatureObject();
-
-		if (!animation.isEmpty() && creo != nullptr)
-			creo->doAnimation(animation);
+		if (!animation.isEmpty())
+			npc->doAnimation(animation);
 
 		ConversationScreen* screenToSave = this;
 

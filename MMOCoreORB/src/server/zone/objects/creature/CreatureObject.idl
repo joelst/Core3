@@ -40,7 +40,7 @@ include system.util.SortedVector;
 include system.lang.ref.WeakReference;
 include engine.log.Logger;
 include server.zone.CloseObjectsVector;
-include server.zone.TreeEntry;
+include server.zone.QuadTreeEntry;
 import system.util.SynchronizedVectorMap;
 import server.zone.managers.auction.AuctionSearchTask;
 import server.zone.objects.tangible.Instrument;
@@ -1198,14 +1198,14 @@ class CreatureObject extends TangibleObject {
 	public native void notifyLoadFromDatabase();
 
 	@local
-	public native void notifyInsert(TreeEntry obj);
+	public native void notifyInsert(QuadTreeEntry obj);
 
 	@local
-	public native void notifyDissapear(TreeEntry obj);
+	public native void notifyDissapear(QuadTreeEntry obj);
 
 	@dirty
 	@local
-	public native void notifyPositionUpdate(TreeEntry entry);
+	public native void notifyPositionUpdate(QuadTreeEntry entry);
 
 	/**
 	 * Destroys this object from database
@@ -2131,26 +2131,6 @@ class CreatureObject extends TangibleObject {
 	@read
 	public boolean isInCover() {
 		return stateBitmask & CreatureState.COVER;
-	}
-
-	@read
-	public boolean isPilotingShip() {
-		return (stateBitmask & CreatureState.PILOTINGSHIP) || (stateBitmask & CreatureState.PILOTINGPOBSHIP);
-	}
-
-	@read
-	public boolean isOnboardPobShip() {
-		return (stateBitmask & CreatureState.SHIPINTERIOR) || (stateBitmask & CreatureState.SHIPOPERATIONS) || (stateBitmask & CreatureState.SHIPGUNNER);
-	}
-
-	@read
-	public boolean isPobShipOperator() {
-		return stateBitmask & CreatureState.SHIPOPERATIONS;
-	}
-
-	@read
-	public boolean isShipGunner() {
-		return stateBitmask & CreatureState.SHIPGUNNER;
 	}
 
 	@read

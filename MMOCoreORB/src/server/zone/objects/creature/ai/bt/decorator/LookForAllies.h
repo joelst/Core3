@@ -54,7 +54,7 @@ public:
 		if (vec == nullptr)
 			return FAILURE;
 
-		SortedVector<TreeEntry* > closeObjects;
+		SortedVector<QuadTreeEntry* > closeObjects;
 		vec->safeCopyReceiversTo(closeObjects, CloseObjectsVector::CREOTYPE);
 
 		for (int i = 0; i < closeObjects.size(); ++i) {

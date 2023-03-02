@@ -27,7 +27,7 @@ public:
 		if (!checkInvalidLocomotions(creature))
 			return INVALIDLOCOMOTION;
 
-		SortedVector<TreeEntry*> closeObjects;
+		SortedVector<QuadTreeEntry*> closeObjects;
 		CloseObjectsVector* vec = (CloseObjectsVector*) creature->getCloseObjects();
 		vec->safeCopyTo(closeObjects);
 

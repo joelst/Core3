@@ -41,7 +41,6 @@
 #include "server/zone/objects/creature/commands/effect/CommandEffect.h"
 #include "server/zone/objects/creature/CommandQueue.h"
 #include "server/zone/Zone.h"
-#include "server/zone/SpaceZone.h"
 #include "server/zone/ZoneServer.h"
 #include "server/chat/ChatManager.h"
 #include "server/chat/StringIdChatParameter.h"
@@ -313,7 +312,7 @@ void CreatureObjectImplementation::sendToOwner(bool doClose) {
 
 	fatal(vec != nullptr) << "close objects vector in creo::sendToOwner null";
 
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 	vec->safeCopyTo(closeObjects);
 
 	for (int i = 0; i < closeObjects.size(); ++i) {
@@ -344,9 +343,8 @@ void CreatureObjectImplementation::sendToOwner(bool doClose) {
 void CreatureObjectImplementation::sendBaselinesTo(SceneObject* player) {
 	CreatureObject* thisPointer = asCreatureObject();
 	Zone* zone = getZoneUnsafe();
-	SpaceZone* spaceZone = getSpaceZone();
 
-	if (zone == nullptr && spaceZone == nullptr)
+	if (zone == nullptr)
 		return;
 
 	if (player == thisPointer) {
@@ -807,7 +805,7 @@ bool CreatureObjectImplementation::setState(uint64 state, bool notifyClient) {
 				setPosture(CreaturePosture::SITTING, false);
 
 				if (thisZone != nullptr) {
-					SortedVector<TreeEntry*> closeSceneObjects;
+					SortedVector<QuadTreeEntry*> closeSceneObjects;
 					int maxInRangeObjects = 0;
 
 					if (closeobjects == nullptr) {
@@ -2208,11 +2206,11 @@ void CreatureObjectImplementation::notifyLoadFromDatabase() {
 
 	skillManager->updateXpLimits(ghost);
 
-	if (getZone() != nullptr || getSpaceZone() != nullptr)
+	if (getZone() != nullptr)
 		ghost->setLinkDead();
 }
 
-void CreatureObjectImplementation::notifyInsert(TreeEntry* obj) {
+void CreatureObjectImplementation::notifyInsert(QuadTreeEntry* obj) {
 	auto linkedCreature = getLinkedCreature().get();
 
 	if (linkedCreature != nullptr && linkedCreature->getParent() == asCreatureObject()) {
@@ -2230,7 +2228,7 @@ void CreatureObjectImplementation::notifyInsert(TreeEntry* obj) {
 	TangibleObjectImplementation::notifyInsert(obj);
 }
 
-void CreatureObjectImplementation::notifyDissapear(TreeEntry* obj) {
+void CreatureObjectImplementation::notifyDissapear(QuadTreeEntry* obj) {
 	auto linkedCreature = getLinkedCreature().get();
 
 	if (linkedCreature != nullptr && linkedCreature->getParent() == asCreatureObject()) {
@@ -2247,7 +2245,7 @@ void CreatureObjectImplementation::notifyDissapear(TreeEntry* obj) {
 	TangibleObjectImplementation::notifyDissapear(obj);
 }
 
-void CreatureObjectImplementation::notifyPositionUpdate(TreeEntry* entry) {
+void CreatureObjectImplementation::notifyPositionUpdate(QuadTreeEntry* entry) {
 	auto linkedCreature = getLinkedCreature().get();
 
 	if (linkedCreature != nullptr && linkedCreature->getParent() == asCreatureObject()) {
@@ -2818,15 +2816,6 @@ void CreatureObjectImplementation::updateGroupMFDPositions() {
 
 void CreatureObjectImplementation::notifySelfPositionUpdate() {
 	auto zone = getZoneUnsafe();
-	auto spaceZone = getSpaceZone();
-
-	bool zoneExist = false;
-	bool spaceZoneExist = false;
-
-	if (zone != nullptr)
-		zoneExist;
-	if (spaceZone != nullptr)
-		spaceZoneExist;
 
 	if (zone != nullptr && hasState(CreatureState::ONFIRE)) {
 		PlanetManager* planetManager =
@@ -3919,7 +3908,7 @@ int CreatureObjectImplementation::getGender() const {
 void CreatureObjectImplementation::updateVehiclePosition(bool sendPackets) {
 	ManagedReference<SceneObject*> parent = getParent().get();
 
-	if (parent == nullptr || (!parent->isVehicleObject() && !parent->isMount() && !parent->isShipObject()))
+	if (parent == nullptr || (!parent->isVehicleObject() && !parent->isMount()))
 		return;
 
 	CreatureObject* creo = cast<CreatureObject*>(parent.get());
@@ -3998,7 +3987,7 @@ void CreatureObjectImplementation::removeOutOfRangeObjects() {
 	if (parent != nullptr && (parent->isVehicleObject() || parent->isMount()))
 		creature = parent;
 
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 	auto closeObjectsVector = creature->getCloseObjects();
 
 	if (closeObjectsVector == nullptr)
@@ -4089,10 +4078,10 @@ void CreatureObjectImplementation::synchronizeCloseObjects() {
 	if (parentCloseObjectsVector == nullptr)
 		return;
 
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 	closeObjectsVector->safeCopyTo(closeObjects);
 
-	SortedVector<TreeEntry*> parentCloseObjects;
+	SortedVector<QuadTreeEntry*> parentCloseObjects;
 	parentCloseObjectsVector->safeCopyTo(parentCloseObjects);
 
 	VectorMap<ManagedReference<SceneObject*>, uint8> diff;

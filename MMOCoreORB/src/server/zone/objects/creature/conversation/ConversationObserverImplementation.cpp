@@ -28,12 +28,12 @@ int ConversationObserverImplementation::notifyObserverEvent(unsigned int eventTy
 		return 0;
 
 	//Try to convert parameters to correct types.
-	SceneObject* conversingNPC = nullptr;
+	CreatureObject* npc = nullptr;
 	CreatureObject* player = nullptr;
 	int selectedOption = 0;
 
 	try {
-		conversingNPC = cast<SceneObject* >(observable);
+		npc = cast<CreatureObject* >(observable);
 
 		if (arg1 != nullptr)
 			player = cast<CreatureObject* >(arg1);
@@ -50,19 +50,19 @@ int ConversationObserverImplementation::notifyObserverEvent(unsigned int eventTy
 		return 0;
 	}
 
-	if (conversingNPC == nullptr)
+	if (npc == nullptr)
 		return 0;
 
 	switch (eventType) {
 	case ObserverEventType::POSITIONCHANGED: {
 		//the observable in this case is the player
-		ManagedReference<ConversationSession*> session = conversingNPC->getActiveSession(SessionFacadeType::CONVERSATION).castTo<ConversationSession*>();
+		ManagedReference<ConversationSession*> session = npc->getActiveSession(SessionFacadeType::CONVERSATION).castTo<ConversationSession*>();
 
 		if (session != nullptr) {
-			ManagedReference<CreatureObject*> sessionNpc = session->getNPC().get().castTo<CreatureObject*>();
+			ManagedReference<CreatureObject*> sessionNpc = session->getNPC().get();
 
-			if (sessionNpc == nullptr || conversingNPC->getDistanceTo(sessionNpc) > 7.f) {
-				cancelConversationSession(conversingNPC->asCreatureObject(), session->getNPC().get(), true);
+			if (sessionNpc == nullptr || npc->getDistanceTo(sessionNpc) > 7.f) {
+				cancelConversationSession(npc, session->getNPC().get(), true);
 				return 0;
 			}
 		}
@@ -71,7 +71,7 @@ int ConversationObserverImplementation::notifyObserverEvent(unsigned int eventTy
 	}
 	case ObserverEventType::STOPCONVERSATION:
 		if (player != nullptr)
-			cancelConversationSession(player, conversingNPC);
+			cancelConversationSession(player, npc);
 
 		//Keep observer.
 		return 0;
@@ -79,13 +79,11 @@ int ConversationObserverImplementation::notifyObserverEvent(unsigned int eventTy
 	case ObserverEventType::STARTCONVERSATION: {
 		if (player != nullptr) {
 			//Cancel any existing sessions.
-			cancelConversationSession(player, conversingNPC);
+			cancelConversationSession(player, npc);
 
 			//Create a new session.
-			createConversationSession(player, conversingNPC);
-
-			if (conversingNPC->isCreatureObject())
-				createPositionObserver(player);
+			createConversationSession(player, npc);
+			createPositionObserver(player);
 		}
 
 		break;
@@ -98,33 +96,33 @@ int ConversationObserverImplementation::notifyObserverEvent(unsigned int eventTy
 		return 0;
 
 	//Select next conversation screen.
-	Reference<ConversationScreen*> conversationScreen = getNextConversationScreen(player, selectedOption, conversingNPC);
+	Reference<ConversationScreen*> conversationScreen = getNextConversationScreen(player, selectedOption, npc);
 
 	if (conversationScreen != nullptr) {
 		//Modify the conversation screen.
-		conversationScreen = runScreenHandlers(player, conversingNPC, selectedOption, conversationScreen);
+		conversationScreen = runScreenHandlers(player, npc, selectedOption, conversationScreen);
 	}
 
 	//Send the conversation screen to the player.
-	sendConversationScreenToPlayer(player, conversingNPC, conversationScreen);
+	sendConversationScreenToPlayer(player, npc, conversationScreen);
 
 	if (conversationScreen == nullptr) {
-		cancelConversationSession(player, conversingNPC);
+		cancelConversationSession(player, npc);
 	}
 
 	//Keep the observer.
 	return 0;
 }
 
-void ConversationObserverImplementation::createConversationSession(CreatureObject* conversingPlayer, SceneObject* conversingNPC) {
-	conversingPlayer->addActiveSession(SessionFacadeType::CONVERSATION, new ConversationSession(conversingNPC));
+void ConversationObserverImplementation::createConversationSession(CreatureObject* conversingPlayer, CreatureObject* npc) {
+	conversingPlayer->addActiveSession(SessionFacadeType::CONVERSATION, new ConversationSession(npc));
 }
 
 void ConversationObserverImplementation::createPositionObserver(CreatureObject* player) {
 	player->registerObserver(ObserverEventType::POSITIONCHANGED, _this.getReferenceUnsafeStaticCast());
 }
 
-void ConversationObserverImplementation::cancelConversationSession(CreatureObject* conversingPlayer, SceneObject* conversingNPC, bool forceClose) {
+void ConversationObserverImplementation::cancelConversationSession(CreatureObject* conversingPlayer, CreatureObject* npc, bool forceClose) {
 	ManagedReference<Facade*> session = conversingPlayer->getActiveSession(SessionFacadeType::CONVERSATION);
 
 	if (session != nullptr) {
@@ -135,11 +133,11 @@ void ConversationObserverImplementation::cancelConversationSession(CreatureObjec
 
 	conversingPlayer->dropObserver(ObserverEventType::POSITIONCHANGED, _this.getReferenceUnsafeStaticCast());
 
-	if (forceClose && conversingNPC != nullptr)
-		conversingPlayer->sendMessage(new StopNpcConversation(conversingPlayer, conversingNPC->getObjectID()));
+	if (forceClose && npc != nullptr)
+		conversingPlayer->sendMessage(new StopNpcConversation(conversingPlayer, npc->getObjectID()));
 }
 
-ConversationScreen* ConversationObserverImplementation::getNextConversationScreen(CreatureObject* conversingPlayer, int selectedOption, SceneObject* conversingNPC) {
+ConversationScreen* ConversationObserverImplementation::getNextConversationScreen(CreatureObject* conversingPlayer, int selectedOption, CreatureObject* conversingNPC) {
 	//Get screen ID from last conversation screen.
 	Reference<ConversationSession*> session = conversingPlayer->getActiveSession(SessionFacadeType::CONVERSATION).castTo<ConversationSession* >();
 	/*String lastScreenId = "";
@@ -167,7 +165,7 @@ ConversationScreen* ConversationObserverImplementation::getNextConversationScree
 	return nextConversationScreen;
 }
 
-ConversationScreen* ConversationObserverImplementation::runScreenHandlers(CreatureObject* conversingPlayer, SceneObject* conversingNPC, int selectedOption, ConversationScreen* conversationScreen) {
+ConversationScreen* ConversationObserverImplementation::runScreenHandlers(CreatureObject* conversingPlayer, CreatureObject* conversingNPC, int selectedOption, ConversationScreen* conversationScreen) {
 	ConversationScreen* modifiedScreen = nullptr;
 
 	//Loop until a screen has been modified.
@@ -196,7 +194,7 @@ ConversationScreen* ConversationObserverImplementation::runScreenHandlers(Creatu
 	return modifiedScreen;
 }
 
-void ConversationObserverImplementation::sendConversationScreenToPlayer(CreatureObject* conversingPlayer, SceneObject* conversingNPC, ConversationScreen* conversationScreen) {
+void ConversationObserverImplementation::sendConversationScreenToPlayer(CreatureObject* conversingPlayer, CreatureObject* conversingNPC, ConversationScreen* conversationScreen) {
 	if (conversationScreen != nullptr) {
 		//Send the screen to the player.
 		conversationScreen->sendTo(conversingPlayer, conversingNPC);

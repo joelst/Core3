@@ -6,7 +6,6 @@
 #define NPCCONVERSATIONSTARTCOMMAND_H_
 
 #include "server/zone/objects/scene/SceneObject.h"
-#include "server/zone/objects/ship/SpaceStationObject.h"
 
 class NpcConversationStartCommand : public QueueCommand {
 public:
@@ -17,7 +16,6 @@ public:
 	}
 
 	int doQueueCommand(CreatureObject* creature, const uint64& target, const UnicodeString& arguments) const {
-
 
 		if (!checkStateMask(creature)) {
 			return INVALIDSTATE;
@@ -60,21 +58,9 @@ public:
 				e.printStackTrace();
 				creature->error("unreported ObjectControllerMessage::parseNpcStartConversation(creature* creature, Message* pack) exception");
 			}
-		}
-
-		else if (object != nullptr && object->isSpaceStationObject()) {
-
-			SpaceStationObject* spaceStationObj = cast<SpaceStationObject*>(object.get());
-
-			ghost->setConversatingCreature(spaceStationObj);
-
-			if (spaceStationObj->sendConversationStartTo(creature))
-				spaceStationObj->notifyObservers(ObserverEventType::STARTCONVERSATION, player);
-
 		} else {
 			return INVALIDTARGET;
 		}
-
 		return SUCCESS;
 	}
 

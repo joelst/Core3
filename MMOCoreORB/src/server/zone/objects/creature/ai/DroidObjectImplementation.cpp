@@ -477,7 +477,7 @@ bool DroidObjectImplementation::sendConversationStartTo(SceneObject* player) {
 	broadcastNextPositionUpdate(&current);
 
 	CreatureObject* playerCreature = cast<CreatureObject*>(player);
-	StartNpcConversation* conv = new StartNpcConversation(playerCreature, getObjectID(), 0, "");
+	StartNpcConversation* conv = new StartNpcConversation(playerCreature, getObjectID(), "");
 	player->sendMessage(conv);
 
 	SortedVector<ManagedReference<Observer*> > observers = getObservers(ObserverEventType::STARTCONVERSATION);
