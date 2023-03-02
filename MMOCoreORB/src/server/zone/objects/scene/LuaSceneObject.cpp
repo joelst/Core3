@@ -11,7 +11,6 @@
 #include "server/zone/managers/stringid/StringIdManager.h"
 #include "server/zone/managers/director/DirectorManager.h"
 #include "server/zone/Zone.h"
-#include "server/zone/SpaceZone.h"
 #include "server/zone/managers/director/ScreenPlayTask.h"
 #include "engine/lua/LuaPanicException.h"
 #include "server/zone/objects/tangible/Container.h"
@@ -61,7 +60,6 @@ Luna<LuaSceneObject>::RegType LuaSceneObject::Register[] = {
 		{ "isCreature", &LuaSceneObject::isCreature },
 		{ "isBuildingObject", &LuaSceneObject::isBuildingObject },
 		{ "isActiveArea", &LuaSceneObject::isActiveArea },
-		{ "isShipObject", &LuaSceneObject::isShipObject },
 		{ "sendTo", &LuaSceneObject::sendTo },
 		{ "getCustomObjectName", &LuaSceneObject::getCustomObjectName },
 		{ "getDisplayedName", &LuaSceneObject::getDisplayedName },
@@ -208,12 +206,6 @@ int LuaSceneObject::getZoneName(lua_State* L) {
 		name = zone->getZoneName();
 	}
 
-	SpaceZone* spaceZone = realObject->getSpaceZone();
-
-	if (spaceZone != nullptr) {
-		name = spaceZone->getZoneName();
-	}
-
 	lua_pushstring(L, name.toCharArray());
 
 	return 1;
@@ -279,7 +271,7 @@ int LuaSceneObject::isInRange(lua_State* L) {
 	float y = lua_tonumber(L, -2);
 	float x = lua_tonumber(L, -3);
 
-	bool res = (static_cast<TreeEntry*>(realObject))->isInRange(x, y, range);
+	bool res = (static_cast<QuadTreeEntry*>(realObject))->isInRange(x, y, range);
 
 	lua_pushnumber(L, res);
 
@@ -602,14 +594,6 @@ int LuaSceneObject::isActiveArea(lua_State* L) {
 	return 1;
 }
 
-int LuaSceneObject::isShipObject(lua_State* L) {
-	bool val = realObject->isShipObject();
-
-	lua_pushboolean(L, val);
-
-	return 1;
-}
-
 int LuaSceneObject::wlock(lua_State* L) {
 	return 0;
 }
@@ -896,7 +880,7 @@ int LuaSceneObject::getPlayersInRange(lua_State *L) {
 
 	lua_newtable(L);
 
-	Reference<SortedVector<ManagedReference<TreeEntry*> >*> playerObjects = new SortedVector<ManagedReference<TreeEntry*> >();
+	Reference<SortedVector<ManagedReference<QuadTreeEntry*> >*> playerObjects = new SortedVector<ManagedReference<QuadTreeEntry*> >();
 	thisZone->getInRangePlayers(realObject->getWorldPositionX(), realObject->getWorldPositionY(), range, playerObjects);
 	int numPlayers = 0;
 

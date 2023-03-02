@@ -7,7 +7,6 @@
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/objects/building/BuildingObject.h"
 #include "server/zone/Zone.h"
-#include "server/zone/SpaceZone.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/objects/player/sessions/SlicingSession.h"
@@ -210,18 +209,7 @@ bool ContainerComponent::transferObject(SceneObject* sceneObject, SceneObject* o
 		return false;
 
 	ManagedReference<SceneObject*> objParent = object->getParent().get();
-	ManagedReference<Zone*> objZone = nullptr;
-	ManagedReference<SpaceZone*> objSpaceZone = nullptr;
-
-	bool isSpaceZone = false;
-
-	if (object->getSpaceZone() != nullptr) {
-		isSpaceZone = true;
-		objSpaceZone = object->getLocalSpaceZone();
-	} else if (object->getZone() != nullptr) {
-		objZone = object->getLocalZone();
-	}
-
+	ManagedReference<Zone*> objZone = object->getLocalZone();
 	ManagedReference<Zone*> oldRootZone = object->getZone();
 
 	if (object->containsActiveSession(SessionFacadeType::SLICING)) {
@@ -232,7 +220,7 @@ bool ContainerComponent::transferObject(SceneObject* sceneObject, SceneObject* o
 		}
 	}
 
-	if (objParent != nullptr || objZone != nullptr || objSpaceZone != nullptr) {
+	if (objParent != nullptr || objZone != nullptr) {
 		if (objParent != nullptr)
 			objParent->removeObject(object, sceneObject, notifyClient);
 
@@ -242,21 +230,13 @@ bool ContainerComponent::transferObject(SceneObject* sceneObject, SceneObject* o
 			return false;
 		}
 
-		if (objZone != nullptr) {
+		if (objZone != nullptr)
 			objZone->remove(object);
 
-			object->setGroundZone(nullptr);
+		object->setZone(nullptr);
 
-			if (objParent == nullptr)
-					objParent = objZone;
-		} else if (objSpaceZone != nullptr) {
-			objSpaceZone->remove(object);
-
-			object->setSpaceZone(nullptr);
-
-			if (objParent == nullptr)
-				objParent = objSpaceZone;
-		}
+		if (objParent == nullptr)
+			objParent = objZone;
 	}
 
 	bool update = true;
@@ -332,11 +312,10 @@ bool ContainerComponent::transferObject(SceneObject* sceneObject, SceneObject* o
 
 	contLocker.release();
 
-	if ((containmentType >= 4) && (objZone == nullptr || objSpaceZone == nullptr)) {
+	if ((containmentType >= 4) && objZone == nullptr)
 		sceneObject->broadcastObject(object, true);
-	} else if (notifyClient) {
+	else if (notifyClient)
 		sceneObject->broadcastMessage(object->link(sceneObject->getObjectID(), containmentType), true);
-	}
 
 	notifyObjectInserted(sceneObject, object);
 
