@@ -47,7 +47,6 @@
 #include "server/zone/objects/group/GroupObject.h"
 #include "server/zone/objects/guild/GuildObject.h"
 #include "server/zone/objects/intangible/ControlDevice.h"
-#include "server/zone/objects/intangible/ShipControlDevice.h"
 #include "server/zone/objects/structure/events/StructureSetOwnerTask.h"
 #include "server/zone/packets/player/BadgesResponseMessage.h"
 #include "server/zone/managers/weather/WeatherManager.h"
@@ -59,7 +58,6 @@
 #include "templates/intangible/SharedPlayerObjectTemplate.h"
 #include "server/zone/objects/player/sessions/TradeSession.h"
 #include "server/zone/objects/player/events/StoreSpawnedChildrenTask.h"
-#include "server/zone/objects/player/events/StoreShipTask.h"
 #include "server/zone/objects/player/events/RemoveSpouseTask.h"
 #include "server/zone/objects/player/events/PvpTefRemovalTask.h"
 #include "server/zone/objects/player/events/SpawnHelperDroidTask.h"
@@ -81,8 +79,6 @@
 #include "server/db/ServerDatabase.h"
 #include "server/ServerCore.h"
 #include "server/zone/managers/gcw/GCWManager.h"
-#include "server/zone/objects/ship/ShipObject.h"
-
 #ifdef WITH_SESSION_API
 #include "server/login/SessionAPIClient.h"
 #endif // WITH_SESSION_API
@@ -259,7 +255,7 @@ void PlayerObjectImplementation::unloadSpawnedChildren() {
 		ManagedReference<SceneObject*> object = datapad->getContainerObject(i);
 
 		if (object->isControlDevice()) {
-			ControlDevice* device = cast<ControlDevice*>(object.get());
+			ControlDevice* device = cast<ControlDevice*>( object.get());
 
 			ManagedReference<CreatureObject*> child = cast<CreatureObject*>(device->getControlledObject());
 			if (child != nullptr)
@@ -269,38 +265,6 @@ void PlayerObjectImplementation::unloadSpawnedChildren() {
 
 	StoreSpawnedChildrenTask* task = new StoreSpawnedChildrenTask(creo, std::move(childrenToStore));
 	task->execute();
-}
-
-void PlayerObjectImplementation::unloadShip() {
-	ManagedReference<CreatureObject*> creature = cast<CreatureObject*>(parent.get().get());
-
-	if (creature == nullptr) {
-		return;
-	}
-
-	ManagedReference<SceneObject*> datapad = creature->getSlottedObject("datapad");
-
-	if (datapad == nullptr) {
-		return;
-	}
-
-	for (int i = 0; i < datapad->getContainerObjectsSize(); ++i) {
-		ManagedReference<SceneObject*> object = datapad->getContainerObject(i);
-
-		if (object == nullptr)
-			continue;
-
-		if (object->isShipControlDevice()) {
-			ShipControlDevice* shipDevice = cast<ShipControlDevice*>(object.get());
-
-			if (shipDevice != nullptr && shipDevice->isShipLaunched()) {
-				StoreShipTask* task = new StoreShipTask(creature, shipDevice);
-
-				if (task != nullptr)
-					task->execute();
-			}
-		}
-	}
 }
 
 void PlayerObjectImplementation::setLastLogoutWorldPosition(const Vector3& position) {
@@ -343,10 +307,8 @@ void PlayerObjectImplementation::unload() {
 		}
 	}
 
-	if (!creature->isOnboardPobShip()) {
-		PlayerManager* playerManager = creature->getZoneServer()->getPlayerManager();
-		playerManager->ejectPlayerFromBuilding(creature);
-	}
+	PlayerManager* playerManager = creature->getZoneServer()->getPlayerManager();
+	playerManager->ejectPlayerFromBuilding(creature);
 
 	ManagedReference<SceneObject*> creoParent = creature->getParent().get();
 
@@ -360,26 +322,6 @@ void PlayerObjectImplementation::unload() {
 		}
 
 		creature->destroyObjectFromWorld(true);
-	} else if (creature->getSpaceZone() != nullptr) {
-		String groundZoneName = launchPoint.getGoundZoneName();
-
-		Zone* newZone = getZoneServer()->getZone(groundZoneName);
-
-		if (newZone != nullptr) {
-			setSavedParentID(0);
-
-			newZone->transferObject(creature, -1, false);
-
-			Vector3 launchLoc = launchPoint.getLocation();
-
-			creature->setPosition(launchLoc.getX(), launchLoc.getZ(), launchLoc.getY());
-			updateLastValidatedPosition();
-
-			savedTerrainName = groundZoneName;
-
-			unloadShip();
-			creature->destroyObjectFromWorld(true);
-		}
 	}
 
 	creature->clearCombatState(true);
@@ -395,7 +337,6 @@ void PlayerObjectImplementation::unload() {
 
 	//Remove player from Chat Manager and all rooms.
 	ManagedReference<ChatManager*> chatManager = getZoneServer()->getChatManager();
-
 	if (chatManager != nullptr) {
 		chatManager->removePlayer(creature->getFirstName().toLowerCase());
 
@@ -418,7 +359,10 @@ void PlayerObjectImplementation::unload() {
 	/*StringBuffer msg;
 	msg << "remaining play ref count: " << asPlayerObject()->getReferenceCount();
 	msg << " - remaining creo ref count: " << creature->getReferenceCount();
-	info(msg.toString(), true);*/
+	info(msg.toString(), true);
+
+	asPlayerObject()->printReferenceHolders();
+	creature->printReferenceHolders();*/
 }
 
 int PlayerObjectImplementation::calculateBhReward() {
@@ -2063,7 +2007,6 @@ void PlayerObjectImplementation::doRecovery(int latency) {
 	}
 
 	ZoneServer* zoneServer = creature->getZoneServer();
-
 	if (zoneServer == nullptr) {
 		return;
 	}
@@ -2219,7 +2162,6 @@ void PlayerObjectImplementation::setLinkDead(bool isSafeLogout) {
 	trx.addState("isSafeLogout", isSafeLogout);
 
 	logoutTimeStamp.updateToCurrentTime();
-
 	if(!isSafeLogout) {
 		info("went link dead");
 		logoutTimeStamp.addMiliTime(ConfigManager::instance()->getInt("Core3.Tweaks.PlayerObject.LinkDeadDelay", 3 * 60) * 1000); // 3 minutes if unsafe
@@ -2676,7 +2618,7 @@ void PlayerObjectImplementation::updateInRangeBuildingPermissions() {
 
 	CloseObjectsVector* vec = (CloseObjectsVector*) parent->getCloseObjects();
 
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 	vec->safeCopyReceiversTo(closeObjects, CloseObjectsVector::STRUCTURETYPE);
 
 	for (int i = 0; i < closeObjects.size(); ++i) {

@@ -159,24 +159,6 @@ void PlanetManagerImplementation::loadLuaConfig() {
 		planetTravelPointList->readLuaObject(&planetTravelPointsTable);
 		planetTravelPointsTable.pop();
 
-		try {
-			LuaObject travelPoints = luaObject.getObjectField("jtlTravelPoints");
-			loadJTLData(&travelPoints);
-			travelPoints.pop();
-
-			LuaObject launchLocation = luaObject.getObjectField("jtlLaunchPoint");
-			if (!launchLocation.isValidTable())
-				return;
-
-			jtlZoneName = launchLocation.getStringAt(1);
-			float x = launchLocation.getFloatAt(2);
-			float y = launchLocation.getFloatAt(3);
-			float z = launchLocation.getFloatAt(4);
-			jtlLaunchLocation = Vector3(x, y, z);
-			launchLocation.pop();
-		} catch (Exception &e) {
-			error(e.getMessage());
-		}
 		loadSnapshotObjects();
 
 		LuaObject planetObjectsTable = luaObject.getObjectField("planetObjects");
@@ -214,25 +196,6 @@ void PlanetManagerImplementation::loadLuaConfig() {
 
 	delete lua;
 	lua = nullptr;
-}
-
-void PlanetManagerImplementation::loadJTLData(LuaObject* luaObject) {
-	if (!luaObject->isValidTable())
-		return;
-//
-	for (int i = 1; i <= luaObject->getTableSize(); ++i) {
-		lua_State *L = luaObject->getLuaState();
-		lua_rawgeti(L, -1, i);
-
-		LuaObject location(L);
-
-		String locationName = location.getStringAt(1);
-		float x = location.getFloatAt(2);
-		float y = location.getFloatAt(3);
-		float z = location.getFloatAt(4);
-		jtlTravelDestinations.put(locationName, Vector3(x, y, z));
-		location.pop();
-	}
 }
 
 void PlanetManagerImplementation::loadPlanetObjects(LuaObject* luaObject) {
@@ -795,7 +758,7 @@ bool PlanetManagerImplementation::noInterferingObjects(CreatureObject* creature,
 	if (vec == nullptr)
 		return true;
 
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 	vec->safeCopyTo(closeObjects);
 
 	for (int j = 0; j < closeObjects.size(); j++) {
@@ -1232,7 +1195,7 @@ bool PlanetManagerImplementation::isInRangeWithPoi(float x, float y, float range
 }
 
 bool PlanetManagerImplementation::isInObjectsNoBuildZone(float x, float y, float extraMargin, bool checkFootprint) {
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 
 	Vector3 targetPos(x, y, zone->getHeight(x, y));
 
@@ -1384,7 +1347,7 @@ bool PlanetManagerImplementation::isCampingPermittedAt(float x, float y, float m
 }
 
 Reference<SceneObject*> PlanetManagerImplementation::findObjectTooCloseToDecoration(float x, float y, float margin) {
-	SortedVector<ManagedReference<TreeEntry* > > closeObjects;
+	SortedVector<ManagedReference<QuadTreeEntry* > > closeObjects;
 
 	Vector3 targetPos(x, y,0);
 
@@ -1499,10 +1462,10 @@ float PlanetManagerImplementation::findClosestWorldFloor(float x, float y, float
 
 	Reference<IntersectionResults*> ref;
 
-	if (intersections == nullptr) {
-		ref = intersections = new IntersectionResults();
-		CollisionManager::getWorldFloorCollisions(x, y, zone, intersections, closeObjects);
-	}
+    if (intersections == nullptr) {
+    	ref = intersections = new IntersectionResults();
+    	CollisionManager::getWorldFloorCollisions(x, y, zone, intersections, closeObjects);
+    }
 
 	float terrainHeight = zone->getHeight(x, y);
 	float diff = fabs(z - terrainHeight);
@@ -1629,8 +1592,4 @@ int PlanetManagerImplementation::destroyAllEventObjects() {
 	}
 
 	return counter;
-}
-
-Vector3 PlanetManagerImplementation::getJtlLaunchLocations() {
-	return jtlLaunchLocation;
 }

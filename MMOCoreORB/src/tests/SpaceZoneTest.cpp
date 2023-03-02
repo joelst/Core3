@@ -105,7 +105,7 @@ TEST_F(SpaceZoneTest, InRangeTest) {
 
 	ASSERT_TRUE(scene->getSpaceZone() != nullptr);
 
-	SortedVector<ManagedReference<TreeEntry*> > objects;
+	SortedVector<ManagedReference<QuadTreeEntry*> > objects;
 
 	spaceZone->getInRangeObjects(0, 0, 0, 512, &objects, true);
 

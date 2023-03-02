@@ -345,7 +345,7 @@ int StructureManager::placeStructureFromDeed(CreatureObject* creature, Structure
 		return 1;
 	}
 
-	SortedVector<ManagedReference<TreeEntry*> > inRangeObjects;
+	SortedVector<ManagedReference<QuadTreeEntry*> > inRangeObjects;
 	zone->getInRangeObjects(x, y, 128, &inRangeObjects, true, false);
 
 	float placingFootprintLength0 = 0, placingFootprintWidth0 = 0, placingFootprintLength1 = 0, placingFootprintWidth1 = 0;
@@ -727,7 +727,7 @@ Reference<SceneObject*> StructureManager::getInRangeParkingGarage(SceneObject* o
 	if (zone == nullptr)
 		return nullptr;
 
-	SortedVector<TreeEntry*> closeSceneObjects;
+	SortedVector<QuadTreeEntry*> closeSceneObjects;
 	CloseObjectsVector* closeObjectsVector = (CloseObjectsVector*) obj->getCloseObjects();
 
 	if (closeObjectsVector == nullptr) {

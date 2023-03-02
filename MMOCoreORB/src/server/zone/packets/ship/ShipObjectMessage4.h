@@ -11,19 +11,21 @@
 
 class ShipObjectMessage4 : public BaseLineMessage {
 public:
-	ShipObjectMessage4(ShipObject* ship) : BaseLineMessage(ship->getObjectID(), 0x53484950, 4, 0x06) {
-		//ship->info(true) << "ShipObjectMessage4 sent";
+	ShipObjectMessage4(ShipObject* ship)
+			: BaseLineMessage(ship->getObjectID(), 0x53484950, 4, 0x06) {
 
-		insertFloat(ship->getChassisMass()); // Current Mass
-		insertFloat(ship->getChassisSpeed()); // Chassis Speed
+		insertFloat(0.80000001f); //mass
+		insertFloat(512.f); //mass max
 
-		insertFloat(ship->getCapacitorEnergy()); // Cpacitor Energy
-		insertFloat(ship->getBoosterEnergy()); // Booster Energy
+		insertFloat(100.f); // capacitor ?
+		insertFloat(0); //float
 
-		ship->getComponentRefireEfficiency()->insertToMessage(this);
+		insertInt(0); //const Archive::AutoDeltaPackedMap<int,float,Archive::DefaultObjectType>::`vftable'
+		insertInt(0);
 
 		setSize();
 	}
+		
 };
 
 #endif /*SHIPOBJECTMESSAGE4_H_*/

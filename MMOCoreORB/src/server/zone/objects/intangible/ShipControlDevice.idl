@@ -10,25 +10,53 @@ import server.zone.objects.creature.CreatureObject;
 import server.zone.packets.object.ObjectMenuResponse;
 include server.zone.managers.radial.RadialOptions;
 import server.zone.objects.scene.SceneObject;
-import server.zone.objects.ship.ShipObject;
 
 @json
 class ShipControlDevice extends ControlDevice {
-	protected int shipType;
-	protected boolean launched;
-
 	public ShipControlDevice() {
 		Logger.setLoggingName("ShipControlDevice");
-
-		shipType = 0;
-		launched = false;
 	}
-
-	public native void storeShip(CreatureObject player);
 
 	@preLocked
 	@arg1preLocked
-	public native int handleObjectMenuSelect(CreatureObject player, byte selectedID);
+	public native void storeObject(CreatureObject player, boolean force = false);
+
+	@preLocked
+	@arg1preLocked
+	public native void generateObject(CreatureObject player);
+
+	@preLocked
+	@arg1preLocked
+	public int handleObjectMenuSelect(CreatureObject player, byte selectedID) {
+		Logger.info("selected call");
+
+		if (selectedID == RadialOptions.VEHICLE_GENERATE) {
+
+			if (!super.controlledObject) {
+				Logger.error("null controlled object in vehicle control device");
+				return 1;
+			} else {
+				SceneObject parent = player.getParent();
+
+				if (!parent) {
+					this.generateObject(player);
+				}
+			}
+		} else if (selectedID == RadialOptions.VEHICLE_STORE) {
+			if (!super.controlledObject) {
+				Logger.error("null controlled object in vehicle control device");
+				return 1;
+			} else {
+				if (super.status == 1 && !super.controlledObject.isInQuadTree()) {
+					this.generateObject(player);
+				} else {
+					this.storeObject(player);
+				}
+			}
+		}
+
+		return 0;
+	}
 
 	/**
 	 * Fills the radial options, needs to be overriden
@@ -42,27 +70,6 @@ class ShipControlDevice extends ControlDevice {
 
 	@dirty
 	public native boolean canBeTradedTo(CreatureObject player, CreatureObject receiver, int numberInTrade);
-
-	@local
-	@preLocked
-	public void setShipType(int type) {
-		shipType = type;
-	}
-
-	@preLocked
-	public void setShipLaunchStatus(boolean val) {
-		launched = val;
-	}
-
-	@read
-	public int getShipType() {
-		return shipType;
-	}
-
-	@read
-	public boolean isShipLaunched() {
-		return launched;
-	}
 
 	@dirty
 	public boolean isShipControlDevice() {

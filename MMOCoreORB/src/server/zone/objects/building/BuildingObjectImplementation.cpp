@@ -436,7 +436,7 @@ void BuildingObjectImplementation::notifyObjectInsertedToZone(SceneObject* objec
 	debug("BuildingObjectImplementation::notifyInsertToZone");
 
 	auto closeObjectsVector = getCloseObjects();
-	Vector<TreeEntry*> closeObjects(closeObjectsVector->size(), 10);
+	Vector<QuadTreeEntry*> closeObjects(closeObjectsVector->size(), 10);
 	closeObjectsVector->safeCopyReceiversTo(closeObjects, CloseObjectsVector::CREOTYPE);
 
 	for (int i = 0; i < closeObjects.size(); ++i) {
@@ -479,7 +479,7 @@ void BuildingObjectImplementation::notifyObjectInsertedToZone(SceneObject* objec
 	//this->sendTo(object, true);
 }
 
-void BuildingObjectImplementation::notifyInsert(TreeEntry* obj) {
+void BuildingObjectImplementation::notifyInsert(QuadTreeEntry* obj) {
 #if DEBUG_COV
 	if (getObjectID() == 88) { // Theed Cantina
 		info("BuildingObjectImplementation::notifyInsert(" + String::valueOf(obj->getObjectID()) + ")", true);
@@ -534,7 +534,7 @@ void BuildingObjectImplementation::notifyInsert(TreeEntry* obj) {
 	}
 }
 
-void BuildingObjectImplementation::notifyDissapear(TreeEntry* obj) {
+void BuildingObjectImplementation::notifyDissapear(QuadTreeEntry* obj) {
 #if DEBUG_COV
 	if (getObjectID() == 88) { // Theed Cantina
 		info("BuildingObjectImplementation::notifyDissapear(" + String::valueOf(obj->getObjectID()) + ")", true);
@@ -578,7 +578,7 @@ void BuildingObjectImplementation::notifyDissapear(TreeEntry* obj) {
 	}
 }
 
-void BuildingObjectImplementation::notifyPositionUpdate(TreeEntry* entry) {
+void BuildingObjectImplementation::notifyPositionUpdate(QuadTreeEntry* entry) {
 #if ! COV_BUILDING_QUAD_RANGE
 	StructureObjectImplementation::notifyPositionUpdate(entry);
 	return;
@@ -633,17 +633,17 @@ void BuildingObjectImplementation::notifyPositionUpdate(TreeEntry* entry) {
 #endif // COV_BUILDING_QUAD_RANGE
 }
 
-void BuildingObjectImplementation::insert(TreeEntry* entry) {
+void BuildingObjectImplementation::insert(QuadTreeEntry* entry) {
 	//return;
 }
 
-void BuildingObjectImplementation::remove(TreeEntry* entry) {
+void BuildingObjectImplementation::remove(QuadTreeEntry* entry) {
 }
 
-void BuildingObjectImplementation::update(TreeEntry* entry) {
+void BuildingObjectImplementation::update(QuadTreeEntry* entry) {
 }
 
-void BuildingObjectImplementation::inRange(TreeEntry* entry, float range) {
+void BuildingObjectImplementation::inRange(QuadTreeEntry* entry, float range) {
 }
 
 void BuildingObjectImplementation::addCell(CellObject* cell, uint32 cellNumber) {
@@ -748,7 +748,7 @@ void BuildingObjectImplementation::destroyObjectFromDatabase(
 void BuildingObjectImplementation::broadcastCellPermissions() {
 	CloseObjectsVector* closeObjectsVector = (CloseObjectsVector*) getCloseObjects();
 
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 	closeObjectsVector->safeCopyReceiversTo(closeObjects, CloseObjectsVector::CREOTYPE);
 
 	for (int i = 0; i < closeObjects.size(); ++i) {
@@ -776,7 +776,7 @@ void BuildingObjectImplementation::broadcastCellPermissions(uint64 objectid) {
 
 	CloseObjectsVector* closeObjectsVector = getCloseObjects();
 
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 	closeObjectsVector->safeCopyReceiversTo(closeObjects, CloseObjectsVector::CREOTYPE);
 
 	for (int i = 0; i < closeObjects.size(); ++i) {
@@ -939,7 +939,7 @@ uint32 BuildingObjectImplementation::getMaximumNumberOfPlayerItems() {
 
 	auto maxItems = MAXPLAYERITEMS;
 
-	return Math::min(maxItems, lots * 10000);
+	return Math::min(maxItems, lots * 100);
 }
 
 int BuildingObjectImplementation::notifyObjectInsertedToChild(SceneObject* object, SceneObject* child, SceneObject* oldParent) {

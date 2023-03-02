@@ -214,7 +214,7 @@ bool PlayerManagerImplementation::rescheduleOnlinePlayerLogTask(int logSecs) {
 
 	onlinePlayerLogTask->schedulePeriodic(0, logSecs * 1000);
 
-	info(true) << "Logging online players every " << logSecs << " seconds.";
+	info(true) << "Loging online players every " << logSecs << " seconds.";
 
 	return true;
 }
@@ -566,14 +566,7 @@ void PlayerManagerImplementation::writePlayerLog(PlayerObject* ghost, const Stri
 	if (ghost == nullptr)
 		return;
 
-	auto object = ghost->getParent().get();
-
-	if (object == nullptr) {
-		error() << "Ghost has null parent -- ID: " << ghost->getObjectID();
-		return;
-	}
-
-	Reference<CreatureObject*> creature = object->asCreatureObject();
+	Reference<CreatureObject*> creature = ghost->getParent().get()->asCreatureObject();
 
 	if (creature == nullptr)
 		return;
@@ -3496,7 +3489,7 @@ SceneObject* PlayerManagerImplementation::getInRangeStructureWithAdminRights(Cre
 	Locker _locker(zone);
 
 	CloseObjectsVector* closeObjs = (CloseObjectsVector*)creature->getCloseObjects();
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 	closeObjs->safeCopyReceiversTo(closeObjects, CloseObjectsVector::STRUCTURETYPE);
 
 	for (int i = 0; i < closeObjects.size(); ++i) {
@@ -3797,7 +3790,7 @@ int PlayerManagerImplementation::checkSpeedHackSecondTest(CreatureObject* player
 	if (newParent != nullptr) {
 		ManagedReference<SceneObject*> root = newParent->getRootParent();
 
-		if (!root->isBuildingObject() && !root->isShipObject())
+		if (!root->isBuildingObject())
 			return 1;
 
 		float length = Math::sqrt(newX * newX + newY * newY);
@@ -4105,7 +4098,7 @@ CraftingStation* PlayerManagerImplementation::getNearbyCraftingStation(CreatureO
 	//Locker locker(zone);
 
 	CloseObjectsVector* vec = (CloseObjectsVector*) player->getCloseObjects();
-	SortedVector<TreeEntry*> closeObjects(vec->size(), 10);
+	SortedVector<QuadTreeEntry*> closeObjects(vec->size(), 10);
 	vec->safeCopyTo(closeObjects);
 
 	for (int i = 0; i < closeObjects.size(); ++i) {

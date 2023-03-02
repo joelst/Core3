@@ -208,7 +208,7 @@ TEST_F(ZoneTest, InRangeTest) {
 
 	ASSERT_TRUE(scene->getZone() != nullptr);
 
-	SortedVector<ManagedReference<TreeEntry*> > objects;
+	SortedVector<ManagedReference<QuadTreeEntry*> > objects;
 
 	zone->getInRangeObjects(0, 0, 128, &objects, true);
 

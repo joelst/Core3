@@ -8,49 +8,74 @@
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/Zone.h"
-#include "server/zone/SpaceZone.h"
 #include "server/zone/managers/player/PlayerManager.h"
-#include "server/zone/objects/ship/ShipObject.h"
-#include "server/zone/managers/ship/ShipManager.h"
-#include "templates/params/creature/PlayerArrangement.h"
 
-void ShipControlDeviceImplementation::storeShip(CreatureObject* player) {
-	if (player == nullptr || !isShipLaunched())
+void ShipControlDeviceImplementation::generateObject(CreatureObject* player) {
+	//info("generating ship", true);
+	//return;
+
+	ZoneServer* zoneServer = getZoneServer();
+
+	ManagedReference<TangibleObject*> controlledObject = this->controlledObject.get();
+
+	Locker clocker(controlledObject, player);
+
+	controlledObject->initializePosition(player->getPositionX(), player->getPositionZ() + 10, player->getPositionY());
+
+	player->getZone()->transferObject(controlledObject, -1, true);
+	//controlledObject->insertToZone(player->getZone());
+
+	//removeObject(controlledObject, true);
+
+	controlledObject->transferObject(player, 5, true);
+	player->setState(CreatureState::PILOTINGSHIP);
+	//controlledObject->inflictDamage(player, 0, System::random(50), true);
+
+	updateStatus(1);
+
+	PlayerObject* ghost = player->getPlayerObject();
+
+	if (ghost != nullptr)
+		ghost->setTeleporting(true);
+}
+
+void ShipControlDeviceImplementation::storeObject(CreatureObject* player, bool force) {
+	player->clearState(CreatureState::PILOTINGSHIP);
+
+	ManagedReference<TangibleObject*> controlledObject = this->controlledObject.get();
+
+	if (controlledObject == nullptr)
 		return;
 
-	ShipObject* ship = cast<ShipObject*>(getControlledObject());
+	Locker clocker(controlledObject, player);
 
-	if (ship == nullptr)
+	if (!controlledObject->isInQuadTree())
 		return;
 
-	ShipControlDevice* device = _this.getReferenceUnsafeStaticCast();
+	Zone* zone = player->getZone();
 
-	Locker lock(device);
-	Locker clock(ship, device);
+	if (zone == nullptr)
+		return;
 
-	CityRegion* cityRegion = player->getCityRegion().get();
+	zone->transferObject(player, -1, false);
+	
+	controlledObject->destroyObjectFromWorld(true);
 
-	// City Region for player can be a nullptr when they log off in the ship. The ship will still have its launch
-	// point as a stored location and the player will be transported back there as well.
-	if (cityRegion != nullptr) {
-		String storedLocation = cityRegion->getRegionDisplayedName();
-
-		ship->setStoredLocation(storedLocation);
-	}
-
-	ship->destroyObjectFromWorld(true);
-
-	transferObject(ship, PlayerArrangement::RIDER, true);
-
-	setShipLaunchStatus(false);
+	transferObject(controlledObject, 4, true);
+	
+	updateStatus(0);
 }
 
 void ShipControlDeviceImplementation::fillObjectMenuResponse(ObjectMenuResponse* menuResponse, CreatureObject* player) {
-}
+	//ControlDeviceImplementation::fillObjectMenuResponse(menuResponse, player);
 
-int ShipControlDeviceImplementation::handleObjectMenuSelect(CreatureObject* player, byte selectedID) {
+	ManagedReference<TangibleObject*> controlledObject = this->controlledObject.get();
 
-	return 0;
+	if (!controlledObject->isInQuadTree()) {
+		menuResponse->addRadialMenuItem(60, 3, "Launch Ship"); //Launch
+	} else
+		menuResponse->addRadialMenuItem(61, 3, "Land Ship"); //Launch
+	//menuResponse->addRadialMenuItem(61, 3, "Launch Ship"); //Launch
 }
 
 bool ShipControlDeviceImplementation::canBeTradedTo(CreatureObject* player, CreatureObject* receiver, int numberInTrade) {
@@ -59,43 +84,22 @@ bool ShipControlDeviceImplementation::canBeTradedTo(CreatureObject* player, Crea
 	if (datapad == nullptr)
 		return false;
 
-	ZoneServer* zoneServer = player->getZoneServer();
+	ManagedReference<PlayerManager*> playerManager = player->getZoneServer()->getPlayerManager();
 
-	if (zoneServer != nullptr)
-		return false;
-
-	PlayerManager* playerManager = zoneServer->getPlayerManager();
-
-	if (playerManager == nullptr)
-		return false;
-
-	int totalShips = numberInTrade;
-	int pobShips = 0;
+	int shipsInDatapad = numberInTrade;
 	int maxStoredShips = playerManager->getBaseStoredShips();
 
 	for (int i = 0; i < datapad->getContainerObjectsSize(); i++) {
 		Reference<SceneObject*> obj =  datapad->getContainerObject(i).castTo<SceneObject*>();
 
-		if (obj == nullptr)
-			continue;
-
-		if (obj->isShipControlDevice()) {
-			totalShips++;
-
-			ShipControlDevice* shipDevice = obj.castTo<ShipControlDevice*>();
-
-			if (shipDevice != nullptr && (shipDevice->getShipType() == ShipManager::POBSHIP))
-				pobShips++;
+		if (obj != nullptr && obj->isShipControlDevice() ){
+			shipsInDatapad++;
 		}
 	}
 
-	if (totalShips >= maxStoredShips) {
-		receiver->sendSystemMessage("@space/space_interaction:toomanyships"); // You have too many ships in your datapad already!
-		return false;
-	}
-
-	if (pobShips >= 1 && getShipType() == ShipManager::POBSHIP) {
-		receiver->sendSystemMessage("@space/space_interaction:too_many_pobs"); // You cannot launch another ship with an interior. Empty out one of your other ships and you may take off with this ship.
+	if( shipsInDatapad >= maxStoredShips){
+		player->sendSystemMessage("That person has too many ships in their datapad");
+		receiver->sendSystemMessage("You already have the maximum number of ships that you can own.");
 		return false;
 	}
 

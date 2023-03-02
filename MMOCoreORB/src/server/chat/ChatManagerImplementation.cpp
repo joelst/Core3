@@ -8,7 +8,6 @@
 #include "server/chat/ChatManager.h"
 #include "server/zone/ZoneServer.h"
 #include "server/zone/Zone.h"
-#include "server/zone/SpaceZone.h"
 
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/managers/name/NameManager.h"
@@ -332,7 +331,6 @@ void ChatManagerImplementation::initiateRooms() {
 }
 
 void ChatManagerImplementation::initiatePlanetRooms() {
-	// Create chats for ground zones
 	for (int i = 0; i < server->getZoneCount(); ++i) {
 		ManagedReference<Zone*> zone = server->getZone(i);
 
@@ -698,7 +696,6 @@ void ChatManagerImplementation::destroyRooms() {
 	gameRooms.removeAll();
 }
 
-// Not spatial
 void ChatManagerImplementation::handleChatRoomMessage(CreatureObject* sender, const UnicodeString& message, unsigned int roomID, unsigned int counter) {
 	String name = sender->getFirstName();
 	String fullName = "";
@@ -732,8 +729,9 @@ void ChatManagerImplementation::handleChatRoomMessage(CreatureObject* sender, co
 		return;
 
 	Zone* zone = sender->getZone();
-	if( zone == nullptr )
+	if( zone == nullptr ){
 		return;
+	}
 
 	//Check for moderated (muted) room.
 	if (channel->isModerated() && !channel->hasModerator(sender)) {
@@ -852,7 +850,7 @@ void ChatManagerImplementation::handleSocialInternalMessage(CreatureObject* send
 
 	CloseObjectsVector* vec = (CloseObjectsVector*) sender->getCloseObjects();
 
-	SortedVector<TreeEntry* > closeEntryObjects(200, 50);
+	SortedVector<QuadTreeEntry* > closeEntryObjects(200, 50);
 
 	if (vec != nullptr) {
 		vec->safeCopyReceiversTo(closeEntryObjects, CloseObjectsVector::PLAYERTYPE);
@@ -1023,7 +1021,10 @@ void ChatManagerImplementation::broadcastMessage(BaseMessage* message) {
 
 void ChatManagerImplementation::broadcastChatMessage(CreatureObject* sourceCreature, const UnicodeString& message,
 		uint64 chatTargetID, uint32 spatialChatType, uint32 moodType, uint32 chatFlags, int languageID) const {
+	Zone* zone = sourceCreature->getZone();
 
+	if (zone == nullptr)
+		return;
 
 	if (spatialChatType == 0) {
 		spatialChatType = defaultSpatialChatType;
@@ -1076,7 +1077,7 @@ void ChatManagerImplementation::broadcastChatMessage(CreatureObject* sourceCreat
 
 	CloseObjectsVector* closeObjects = (CloseObjectsVector*) sourceCreature->getCloseObjects();
 
-	SortedVector<TreeEntry*> closeEntryObjects(200, 50);
+	SortedVector<QuadTreeEntry*> closeEntryObjects(200, 50);
 
 	if (closeObjects != nullptr) {
 		closeObjects->safeCopyReceiversTo(closeEntryObjects, CloseObjectsVector::CREOTYPE);
@@ -1084,13 +1085,7 @@ void ChatManagerImplementation::broadcastChatMessage(CreatureObject* sourceCreat
 #ifdef COV_DEBUG
 		sourceCreature->info("Null closeobjects vector in ChatManager::broadcastChatMessage", true);
 #endif
-		if (sourceCreature->getSpaceZone() != nullptr) {
-			SpaceZone* spaceZone = sourceCreature->getSpaceZone();
-			spaceZone->getInRangeObjects(sourceCreature->getWorldPositionX(), sourceCreature->getWorldPositionY(), sourceCreature->getWorldPositionZ(), ZoneServer::CLOSEOBJECTRANGE, &closeEntryObjects, true);
-		} else if (sourceCreature->getZone() != nullptr) {
-			Zone* zone = sourceCreature->getZone();
-			zone->getInRangeObjects(sourceCreature->getWorldPositionX(), sourceCreature->getWorldPositionY(), ZoneServer::CLOSEOBJECTRANGE, &closeEntryObjects, true);
-		}
+		zone->getInRangeObjects(sourceCreature->getWorldPositionX(), sourceCreature->getWorldPositionY(), 128, &closeEntryObjects, true);
 	}
 
 	short range = defaultSpatialChatDistance;
@@ -1227,8 +1222,12 @@ void ChatManagerImplementation::broadcastChatMessage(CreatureObject* sourceCreat
 }
 
 void ChatManagerImplementation::broadcastChatMessage(CreatureObject* sourceCreature, StringIdChatParameter& message, uint64 chatTargetID, uint32 spatialChatType, uint32 moodType, uint32 chatFlags, int languageID) {
+	Zone* zone = sourceCreature->getZone();
 	PlayerObject* myGhost = nullptr;
 	bool godMode = false;
+
+	if (zone == nullptr)
+		return;
 
 	if (spatialChatType == 0) {
 		spatialChatType = defaultSpatialChatType;
@@ -1253,7 +1252,7 @@ void ChatManagerImplementation::broadcastChatMessage(CreatureObject* sourceCreat
 
 	CloseObjectsVector* closeObjects = (CloseObjectsVector*) sourceCreature->getCloseObjects();
 
-	SortedVector<TreeEntry*> closeEntryObjects(200, 50);
+	SortedVector<QuadTreeEntry*> closeEntryObjects(200, 50);
 
 	if (closeObjects != nullptr) {
 		closeObjects->safeCopyReceiversTo(closeEntryObjects, CloseObjectsVector::PLAYERTYPE);
@@ -1261,15 +1260,9 @@ void ChatManagerImplementation::broadcastChatMessage(CreatureObject* sourceCreat
 #ifdef COV_DEBUG
 		sourceCreature->info("Null closeobjects vector in ChatManager::broadcastChatMessage(StringId)", true);
 #endif
-		if (sourceCreature->getSpaceZone() != nullptr) {
-			SpaceZone* spaceZone = sourceCreature->getSpaceZone();
-			spaceZone->getInRangeObjects(sourceCreature->getWorldPositionX(), sourceCreature->getWorldPositionY(), sourceCreature->getWorldPositionZ(), ZoneServer::CLOSEOBJECTRANGE, &closeEntryObjects, true);
-		} else if (sourceCreature->getZone() != nullptr) {
-			Zone* zone = sourceCreature->getZone();
-			zone->getInRangeObjects(sourceCreature->getWorldPositionX(), sourceCreature->getWorldPositionY(), ZoneServer::CLOSEOBJECTRANGE, &closeEntryObjects, true);
-		}
-
+		zone->getInRangeObjects(sourceCreature->getWorldPositionX(), sourceCreature->getWorldPositionY(), ZoneServer::CLOSEOBJECTRANGE, &closeEntryObjects, true);
 	}
+
 	short range = defaultSpatialChatDistance;
 
 	short specialRange = spatialChatDistances.get(spatialChatType);
@@ -1330,6 +1323,7 @@ void ChatManagerImplementation::broadcastChatMessage(CreatureObject* sourceCreat
 			}
 
 			cmsg = new SpatialChat(sourceID, targetID, chatTargetID, message, range, spatialChatType, moodType, chatFlags, languageID);
+
 			creature->sendMessage(cmsg);
 		}
 	} catch (...) {
@@ -1377,7 +1371,6 @@ void ChatManagerImplementation::handleSpatialChatInternalMessage(CreatureObject*
 		}
 
 		UnicodeString formattedMessage(formatMessage(msg));
-
 		broadcastChatMessage(player, formattedMessage, targetID, spatialChatType, moodType, chatFlags, languageID);
 
 		ManagedReference<ChatMessage*> cm = new ChatMessage();
@@ -1449,7 +1442,7 @@ void ChatManagerImplementation::handleChatInstantMessageToCharacter(ChatInstantM
 
 		return;
 	}
-
+	
 	Reference<CreatureObject*> receiver = getPlayer(fname);
 
 	if (receiver == nullptr) {

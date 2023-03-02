@@ -8,7 +8,6 @@
 #include "DirectorManager.h"
 #include "server/zone/objects/cell/CellObject.h"
 #include "server/zone/objects/creature/LuaCreatureObject.h"
-#include "server/zone/objects/ship/LuaShipObject.h"
 #include "templates/params/creature/CreatureFlag.h"
 #include "server/zone/objects/scene/LuaSceneObject.h"
 #include "server/zone/objects/building/LuaBuildingObject.h"
@@ -96,8 +95,6 @@
 #include "server/zone/managers/director/ScreenPlayObserver.h"
 #include "server/zone/managers/resource/ResourceManager.h"
 #include "server/zone/managers/gcw/observers/SquadObserver.h"
-#include "server/zone/managers/ship/ShipManager.h"
-#include "templates/params/creature/PlayerArrangement.h"
 
 int DirectorManager::DEBUG_MODE = 0;
 int DirectorManager::ERROR_CODE = NO_ERROR;
@@ -607,31 +604,6 @@ void DirectorManager::initializeLuaEngine(Lua* luaEngine) {
 	luaEngine->setGlobalInt("CROUCHED", CreaturePosture::CROUCHED);
 	luaEngine->setGlobalInt("LYINGDOWN", CreaturePosture::LYINGDOWN);
 	luaEngine->setGlobalInt("STATESITTINGONCHAIR", CreatureState::SITTINGONCHAIR);
-	luaEngine->setGlobalInt("PILOTINGSHIP", CreatureState::PILOTINGSHIP);
-	luaEngine->setGlobalLong("PILOTINGPOBSHIP", CreatureState::PILOTINGPOBSHIP);
-
-	//Player Arrangements
-	luaEngine->setGlobalLong("RIDER", PlayerArrangement::RIDER);
-	luaEngine->setGlobalLong("SHIP_PILOT", PlayerArrangement::SHIP_PILOT);
-	luaEngine->setGlobalLong("SHIP_OPERATIONS", PlayerArrangement::SHIP_OPERATIONS);
-	luaEngine->setGlobalLong("SHIP_GUNNER0", PlayerArrangement::SHIP_GUNNER0);
-	luaEngine->setGlobalLong("SHIP_GUNNER1", PlayerArrangement::SHIP_GUNNER1);
-	luaEngine->setGlobalLong("SHIP_GUNNER2", PlayerArrangement::SHIP_GUNNER2);
-	luaEngine->setGlobalLong("SHIP_GUNNER3", PlayerArrangement::SHIP_GUNNER3);
-	luaEngine->setGlobalLong("SHIP_GUNNER4", PlayerArrangement::SHIP_GUNNER4);
-	luaEngine->setGlobalLong("SHIP_GUNNER5", PlayerArrangement::SHIP_GUNNER5);
-	luaEngine->setGlobalLong("SHIP_GUNNER6", PlayerArrangement::SHIP_GUNNER6);
-	luaEngine->setGlobalLong("SHIP_GUNNER7", PlayerArrangement::SHIP_GUNNER7);
-	luaEngine->setGlobalLong("SHIP_PILOT_POB", PlayerArrangement::SHIP_PILOT_POB);
-	luaEngine->setGlobalLong("SHIP_OPERATIONS_POB", PlayerArrangement::SHIP_OPERATIONS_POB);
-	luaEngine->setGlobalLong("SHIP_GUNNER0_POB", PlayerArrangement::SHIP_GUNNER0_POB);
-	luaEngine->setGlobalLong("SHIP_GUNNER1_POB", PlayerArrangement::SHIP_GUNNER1_POB);
-	luaEngine->setGlobalLong("SHIP_GUNNER2_POB", PlayerArrangement::SHIP_GUNNER2_POB);
-	luaEngine->setGlobalLong("SHIP_GUNNER3_POB", PlayerArrangement::SHIP_GUNNER3_POB);
-	luaEngine->setGlobalLong("SHIP_GUNNER4_POB", PlayerArrangement::SHIP_GUNNER4_POB);
-	luaEngine->setGlobalLong("SHIP_GUNNER5_POB", PlayerArrangement::SHIP_GUNNER5_POB);
-	luaEngine->setGlobalLong("SHIP_GUNNER6_POB", PlayerArrangement::SHIP_GUNNER6_POB);
-	luaEngine->setGlobalLong("SHIP_GUNNER7_POB", PlayerArrangement::SHIP_GUNNER7_POB);
 
 	//Waypoint Colors
 	luaEngine->setGlobalInt("WAYPOINTBLUE", WaypointObject::COLOR_BLUE);
@@ -747,12 +719,6 @@ void DirectorManager::initializeLuaEngine(Lua* luaEngine) {
 	luaEngine->setGlobalInt("AI_HARVESTING", AiAgent::HARVESTING);
 	luaEngine->setGlobalInt("AI_RESTING", AiAgent::RESTING);
 
-	// Ship Types
-	luaEngine->setGlobalInt("SHIP", ShipManager::SHIP);
-	luaEngine->setGlobalInt("FIGHTERSHIP", ShipManager::FIGHTERSHIP);
-	luaEngine->setGlobalInt("POBSHIP", ShipManager::POBSHIP);
-	luaEngine->setGlobalInt("SPACESTATION", ShipManager::SPACESTATION);
-
 	// Badges
 	const auto badges = BadgeList::instance()->getMap();
 	for (const auto& entry : *badges) {
@@ -769,7 +735,6 @@ void DirectorManager::initializeLuaEngine(Lua* luaEngine) {
 	Luna<LuaCellObject>::Register(luaEngine->getLuaState());
 	Luna<LuaBuildingObject>::Register(luaEngine->getLuaState());
 	Luna<LuaCreatureObject>::Register(luaEngine->getLuaState());
-	Luna<LuaShipObject>::Register(luaEngine->getLuaState());
 	Luna<LuaSceneObject>::Register(luaEngine->getLuaState());
 	Luna<LuaConversationScreen>::Register(luaEngine->getLuaState());
 	Luna<LuaConversationSession>::Register(luaEngine->getLuaState());
@@ -3101,7 +3066,7 @@ void DirectorManager::startScreenPlay(CreatureObject* creatureObject, const Stri
 	startScreenPlay.callFunction();
 }
 
-ConversationScreen* DirectorManager::getNextConversationScreen(const String& luaClass, ConversationTemplate* conversationTemplate, CreatureObject* conversingPlayer, int selectedOption, SceneObject* conversingNPC) {
+ConversationScreen* DirectorManager::getNextConversationScreen(const String& luaClass, ConversationTemplate* conversationTemplate, CreatureObject* conversingPlayer, int selectedOption, CreatureObject* conversingNPC) {
 	Lua* lua = getLuaInstance();
 
 	LuaFunction runMethod(lua->getLuaState(), luaClass, "getNextConversationScreen", 1);
@@ -3119,7 +3084,7 @@ ConversationScreen* DirectorManager::getNextConversationScreen(const String& lua
 	return result;
 }
 
-ConversationScreen* DirectorManager::runScreenHandlers(const String& luaClass, ConversationTemplate* conversationTemplate, CreatureObject* conversingPlayer, SceneObject* conversingNPC, int selectedOption, ConversationScreen* conversationScreen) {
+ConversationScreen* DirectorManager::runScreenHandlers(const String& luaClass, ConversationTemplate* conversationTemplate, CreatureObject* conversingPlayer, CreatureObject* conversingNPC, int selectedOption, ConversationScreen* conversationScreen) {
 	Lua* lua = getLuaInstance();
 
 	LuaFunction runMethod(lua->getLuaState(), luaClass, "runScreenHandlers", 1);
@@ -3320,22 +3285,12 @@ int DirectorManager::getZoneByName(lua_State* L) {
 
 	String zoneid = lua_tostring(L, -1);
 
-	if (zoneid.contains("space")) {
-		SpaceZone* zone = ServerCore::getZoneServer()->getSpaceZone(zoneid);
+	Zone* zone = ServerCore::getZoneServer()->getZone(zoneid);
 
-		if (zone == nullptr) {
-			lua_pushnil(L);
-		} else {
-			lua_pushlightuserdata(L, zone);
-		}
+	if (zone == nullptr) {
+		lua_pushnil(L);
 	} else {
-		Zone* zone = ServerCore::getZoneServer()->getZone(zoneid);
-
-		if (zone == nullptr) {
-			lua_pushnil(L);
-		} else {
-			lua_pushlightuserdata(L, zone);
-		}
+		lua_pushlightuserdata(L, zone);
 	}
 
 	return 1;

@@ -26,10 +26,6 @@
 #include "server/zone/managers/skill/imagedesign/ImageDesignManager.h"
 #include "server/zone/managers/jedi/JediManager.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
-#include "server/zone/objects/ship/ShipObject.h"
-#include "server/zone/managers/ship/ShipManager.h"
-
-#define JTL_DEBUG
 
 PlayerCreationManager::PlayerCreationManager() :
 		Logger("PlayerCreationManager") {
@@ -42,8 +38,8 @@ PlayerCreationManager::PlayerCreationManager() :
 	professionDefaultsInfo.setNoDuplicateInsertPlan();
 	hairStyleInfo.setNoDuplicateInsertPlan();
 
-	startingCash = 10000;
-	startingBank = 10000;
+	startingCash = 100;
+	startingBank = 1000;
 
 	freeGodMode = false;
 
@@ -338,8 +334,8 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	auto client = callback->getClient();
 
-	if (client->getCharacterCount(zoneServer.get()->getGalaxyID()) >= 15) {
-		ErrorMessage* errMsg = new ErrorMessage("Create Error", "You are limited to 15 characters per galaxy.", 0x0);
+	if (client->getCharacterCount(zoneServer.get()->getGalaxyID()) >= 10) {
+		ErrorMessage* errMsg = new ErrorMessage("Create Error", "You are limited to 10 characters per galaxy.", 0x0);
 		client->sendMessage(errMsg);
 
 		return false;
@@ -438,9 +434,9 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		ghost->setStarterProfession(profession);
 	}
 
-	addCustomization(playerCreature, customization, playerTemplate->getAppearanceFilename());
+	addCustomization(playerCreature, customization,
+			playerTemplate->getAppearanceFilename());
 	addHair(playerCreature, hairTemplate, hairCustomization);
-
 	if (!doTutorial) {
 		addProfessionStartingItems(playerCreature, profession, clientTemplate,
 				false);
@@ -452,14 +448,10 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 		addProfessionStartingItems(playerCreature, profession, clientTemplate,
 				true);
 		addStartingItems(playerCreature, clientTemplate, true);
-		addRacialMods(playerCreature, fileName, &playerTemplate->getStartingSkills(), &playerTemplate->getStartingItems(), true);
+		addRacialMods(playerCreature, fileName,
+				&playerTemplate->getStartingSkills(),
+				&playerTemplate->getStartingItems(), true);
 	}
-
-	// Handle JTL Ship creation
-	createImperialStarterShip(playerCreature);
-	createRebelStarterShip(playerCreature);
-	createNeutralStarterShip(playerCreature);
-	createStarterPobShip(playerCreature);
 
 	if (ghost != nullptr) {
 		int accID = client->getAccountID();
@@ -1072,186 +1064,6 @@ void PlayerCreationManager::addRacialMods(CreatureObject* creature,
 				}
 
 			}
-		}
-	}
-}
-
-void PlayerCreationManager::createImperialStarterShip(CreatureObject* player) const {
-	if (player == nullptr || !player->isPlayerCreature())
-		return;
-
-	PlayerObject* ghost = player->getPlayerObject();
-
-	if (ghost == nullptr)
-		return;
-
-	ManagedReference<ShipControlDevice*> shipControlDevice = zoneServer.get()->createObject(STRING_HASHCODE("object/intangible/ship/tiefighter_pcd.iff"), 1).castTo<ShipControlDevice*>();
-
-	if (shipControlDevice != nullptr) {
-		ManagedReference<ShipObject*> ship = ShipManager::instance()->generateImperialNewbieShip(player);
-
-		Locker lock(shipControlDevice);
-
-		if (ship == nullptr) {
-			shipControlDevice->destroyObjectFromDatabase();
-			return;
-		}
-
-		Locker clock(ship, shipControlDevice);
-
-		if (!shipControlDevice->transferObject(ship, 4)) {
-			error("PlayerCreationManager::createStarterShip - Failed to transfer Ship to Control Device.");
-			shipControlDevice->destroyObjectFromDatabase();
-			return;
-		}
-
-		shipControlDevice->setShipType(ShipManager::FIGHTERSHIP);
-		shipControlDevice->setControlledObject(ship);
-
-		ship->setControlDeviceID(shipControlDevice->getObjectID());
-
-		ManagedReference<SceneObject*> datapad = player->getSlottedObject("datapad");
-
-		if (datapad != nullptr && datapad->transferObject(shipControlDevice, -1)) {
-			ghost->addShip(ship);
-		} else {
-			shipControlDevice->destroyObjectFromDatabase(true);
-			error("PlayerCreationManager::createStarterShip - could not get datapad from player");
-		}
-	}
-}
-
-void PlayerCreationManager::createRebelStarterShip(CreatureObject* player) const {
-	if (player == nullptr || !player->isPlayerCreature())
-		return;
-
-	PlayerObject* ghost = player->getPlayerObject();
-
-	if (ghost == nullptr)
-		return;
-
-	ManagedReference<ShipControlDevice*> shipControlDevice = zoneServer.get()->createObject(STRING_HASHCODE("object/intangible/ship/xwing_pcd.iff"), 1).castTo<ShipControlDevice*>();
-
-	if (shipControlDevice != nullptr) {
-		ManagedReference<ShipObject*> ship = ShipManager::instance()->generateRebelNewbieShip(player);
-
-		Locker lock(shipControlDevice);
-
-		if (ship == nullptr) {
-			shipControlDevice->destroyObjectFromDatabase();
-			return;
-		}
-
-		Locker clock(ship, shipControlDevice);
-
-		if (!shipControlDevice->transferObject(ship, 4)) {
-			error("PlayerCreationManager::createStarterShip - Failed to transfer Ship to Control Device.");
-			shipControlDevice->destroyObjectFromDatabase();
-			return;
-		}
-
-		shipControlDevice->setShipType(ShipManager::FIGHTERSHIP);
-		shipControlDevice->setControlledObject(ship);
-
-		ship->setControlDeviceID(shipControlDevice->getObjectID());
-
-		ManagedReference<SceneObject*> datapad = player->getSlottedObject("datapad");
-
-		if (datapad != nullptr && datapad->transferObject(shipControlDevice, -1)) {
-			ghost->addShip(ship);
-		} else {
-			shipControlDevice->destroyObjectFromDatabase(true);
-			error("PlayerCreationManager::createStarterShip - could not get datapad from player");
-		}
-	}
-}
-
-void PlayerCreationManager::createNeutralStarterShip(CreatureObject* player) const {
-	if (player == nullptr || !player->isPlayerCreature())
-		return;
-
-	PlayerObject* ghost = player->getPlayerObject();
-
-	if (ghost == nullptr)
-		return;
-
-	ManagedReference<ShipControlDevice*> shipControlDevice = zoneServer.get()->createObject(STRING_HASHCODE("object/intangible/ship/z95_pcd.iff"), 1).castTo<ShipControlDevice*>();
-
-	if (shipControlDevice != nullptr) {
-		ManagedReference<ShipObject*> ship = ShipManager::instance()->generateNeutralNewbieShip(player);
-
-		Locker lock(shipControlDevice);
-
-		if (ship == nullptr) {
-			shipControlDevice->destroyObjectFromDatabase();
-			return;
-		}
-
-		Locker clock(ship, shipControlDevice);
-
-		if (!shipControlDevice->transferObject(ship, 4)) {
-			error("PlayerCreationManager::createStarterShip - Failed to transfer Ship to Control Device.");
-			shipControlDevice->destroyObjectFromDatabase();
-			return;
-		}
-
-		shipControlDevice->setShipType(ShipManager::FIGHTERSHIP);
-		shipControlDevice->setControlledObject(ship);
-
-		ship->setControlDeviceID(shipControlDevice->getObjectID());
-
-		ManagedReference<SceneObject*> datapad = player->getSlottedObject("datapad");
-
-		if (datapad != nullptr && datapad->transferObject(shipControlDevice, -1)) {
-			ghost->addShip(ship);
-		} else {
-			shipControlDevice->destroyObjectFromDatabase(true);
-			error("PlayerCreationManager::createStarterShip - could not get datapad from player");
-		}
-	}
-}
-
-void PlayerCreationManager::createStarterPobShip(CreatureObject* player) const {
-	if (player == nullptr || !player->isPlayerCreature())
-		return;
-
-	PlayerObject* ghost = player->getPlayerObject();
-
-	if (ghost == nullptr)
-		return;
-
-	ManagedReference<ShipControlDevice*> shipControlDevice = zoneServer.get()->createObject(STRING_HASHCODE("object/intangible/ship/sorosuub_space_yacht_pcd.iff"), 1).castTo<ShipControlDevice*>();
-
-	if (shipControlDevice != nullptr) {
-		ManagedReference<ShipObject*> ship = ShipManager::instance()->generatePOBShip(player);
-
-		Locker lock(shipControlDevice);
-
-		if (ship == nullptr) {
-			shipControlDevice->destroyObjectFromDatabase();
-			return;
-		}
-
-		Locker clock(ship, shipControlDevice);
-
-		if (!shipControlDevice->transferObject(ship, 4)) {
-			error("PlayerCreationManager::createStarterPobShip - Failed to transfer Ship to Control Device.");
-			shipControlDevice->destroyObjectFromDatabase();
-			return;
-		}
-
-		shipControlDevice->setShipType(ShipManager::POBSHIP);
-		shipControlDevice->setControlledObject(ship);
-
-		ship->setControlDeviceID(shipControlDevice->getObjectID());
-
-		ManagedReference<SceneObject*> datapad = player->getSlottedObject("datapad");
-
-		if (datapad != nullptr && datapad->transferObject(shipControlDevice, -1)) {
-			ghost->addShip(ship);
-		} else {
-			shipControlDevice->destroyObjectFromDatabase(true);
-			error("PlayerCreationManager::createStarterPobShip - could not get datapad from player");
 		}
 	}
 }

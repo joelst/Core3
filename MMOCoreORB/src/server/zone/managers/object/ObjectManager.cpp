@@ -19,15 +19,6 @@
 #include "conf/ConfigManager.h"
 #include "engine/orb/db/UpdateModifiedObjectsThread.h"
 #include "engine/orb/db/CommitMasterTransactionThread.h"
-#include "server/zone/objects/ship/components/ShipComponent.h"
-#include "server/zone/objects/ship/components/ShipCapacitorComponent.h"
-#include "server/zone/objects/ship/components/ShipEngineComponent.h"
-#include "server/zone/objects/ship/components/ShipArmorComponent.h"
-#include "server/zone/objects/ship/components/ShipWeaponComponent.h"
-#include "server/zone/objects/ship/components/ShipBoosterComponent.h"
-#include "server/zone/objects/ship/components/ShipEngineComponent.h"
-#include "server/zone/objects/ship/components/ShipReactorComponent.h"
-#include "server/zone/objects/ship/components/ShipShieldComponent.h"
 
 using namespace engine::db;
 
@@ -243,7 +234,6 @@ void ObjectManager::registerObjectTypes() {
 	objectFactory.registerObject<ResourceDeed>(SceneObjectType::RESOURCEDEED);
 	objectFactory.registerObject<EventPerkDeed>(SceneObjectType::EVENTPERKDEED);
 	objectFactory.registerObject<VetHarvesterDeed>(SceneObjectType::VETHARVESTERDEED);
-	objectFactory.registerObject<ShipDeed>(SceneObjectType::SHIPDEED);
 	objectFactory.registerObject<GroupObject>(SceneObjectType::GROUPOBJECT);
 	objectFactory.registerObject<GuildObject>(SceneObjectType::GUILDOBJECT);
 	objectFactory.registerObject<StimPack>(SceneObjectType::STIMPACK);
@@ -333,26 +323,22 @@ void ObjectManager::registerObjectTypes() {
 	objectFactory.registerObject<PowerupObject>(SceneObjectType::HEAVYWEAPONPOWERUP);
 	objectFactory.registerObject<PowerupObject>(SceneObjectType::MINEPOWERUP);
 	objectFactory.registerObject<PowerupObject>(SceneObjectType::SPECIALHEAVYWEAPONPOWERUP);
-	objectFactory.registerObject<ShipComponent>(SceneObjectType::SHIPATTACHMENT);
-	objectFactory.registerObject<ShipReactorComponent>(SceneObjectType::SHIPREACTOR);
-	objectFactory.registerObject<ShipEngineComponent>(SceneObjectType::SHIPENGINE);
-	objectFactory.registerObject<ShipShieldComponent>(SceneObjectType::SHIPSHIELDGENERATOR);
-	objectFactory.registerObject<ShipArmorComponent>(SceneObjectType::SHIPARMOR);
-	objectFactory.registerObject<ShipWeaponComponent>(SceneObjectType::SHIPWEAPON);
-	objectFactory.registerObject<ShipCapacitorComponent>(SceneObjectType::SHIPWEAPONCAPACITOR);
-	objectFactory.registerObject<ShipBoosterComponent>(SceneObjectType::SHIPBOOSTER);
+	objectFactory.registerObject<Component>(SceneObjectType::SHIPATTACHMENT);
+	objectFactory.registerObject<Component>(SceneObjectType::SHIPREACTOR);
+	objectFactory.registerObject<Component>(SceneObjectType::SHIPENGINE);
+	objectFactory.registerObject<Component>(SceneObjectType::SHIPSHIELDGENERATOR);
+	objectFactory.registerObject<Component>(SceneObjectType::SHIPARMOR);
+	objectFactory.registerObject<Component>(SceneObjectType::SHIPWEAPON);
+	objectFactory.registerObject<Component>(SceneObjectType::SHIPWEAPONCAPACITOR);
+	objectFactory.registerObject<Component>(SceneObjectType::SHIPBOOSTER);
 	objectFactory.registerObject<Component>(SceneObjectType::SHIPDRIODINTERFACE);
 	objectFactory.registerObject<Component>(SceneObjectType::SHIPCHASSIS);
 	objectFactory.registerObject<Component>(SceneObjectType::SHIPMISSILE);
 	objectFactory.registerObject<Component>(SceneObjectType::SHIPCOUNTERMEASURE);
 	objectFactory.registerObject<Component>(SceneObjectType::SHIPWEAPONLAUNCHER);
 	objectFactory.registerObject<Component>(SceneObjectType::SHIPCOUNTERMEASURELAUNCHER);
-	objectFactory.registerObject<TangibleObject>(SceneObjectType::PILOTCHAIR);
 	objectFactory.registerObject<FactoryCrate>(SceneObjectType::FACTORYCRATE);
-	objectFactory.registerObject<ShipObject>(SceneObjectType::SHIP);
 	objectFactory.registerObject<FighterShipObject>(SceneObjectType::SHIPFIGHTER);
-	objectFactory.registerObject<ShipObject>(SceneObjectType::SHIPCAPITAL);
-	objectFactory.registerObject<ShipObject>(SceneObjectType::SHIPTRANSPORT);
 	objectFactory.registerObject<SpaceStationObject>(SceneObjectType::SHIPSTATION);
 	objectFactory.registerObject<TangibleObject>(SceneObjectType::CRYSTAL);
 }

@@ -10,61 +10,74 @@
 
 class ShipObjectMessage6 : public TangibleObjectMessage6 {
 public:
-	ShipObjectMessage6(ShipObject* ship) : TangibleObjectMessage6(ship, 0x53484950, 0x18) {
-		//ship->info(true) << "ShipObjectMessage6 sent";
+	ShipObjectMessage6(ShipObject* ship)
+			: TangibleObjectMessage6(ship, 0x53484950, 0x18) {
 
-		CreatureObject* owner = ship->getOwner().get();
-		uint64 targetID = 0;
-		uint64 guildID = 0;
+		insertShort(ship->getUniqueID()); //3 const Archive::AutoDeltaVariableCallback<ushort,ShipObject::Callbacks::DefaultCallback<ShipObject::Messages::ShipIdChanged,ushort>,ShipObject>::`vftable
 
 
-		if (owner != nullptr) {
-			targetID = owner->getTargetID();
-			guildID = owner->getGuildID();
-		}
+		insertFloat(50.f); // 4 const Archive::AutoDeltaVariable<float>::`vftable'
+		insertFloat(50.f); // 5 min speed // Archive::AutoDeltaVariable<float>
 
-		insertShort(ship->getUniqueID()); // ShipID
-		insertFloat(ship->getShipAccelerationRate()); // acceleration rate
-		insertFloat(ship->getShipDecelerationRate()); // decelleration rate
+		insertFloat(10.472f); //6 Yaw Acceleration Max
+		insertFloat(10.472f); // 7 Pitch Acceleration Max
+		insertFloat(5.23599f); //8 Roll Acceleration Max
 
-		insertFloat(ship->getCurrentPitchRate()); //5 Pitch Acceleration Max
-		insertFloat(ship->getCurrentYawRate()); // 6 Yaw Acceleration Max
-		insertFloat(ship->getCurrentRollRate()); //7 Roll Acceleration Max
+		insertFloat(0.1675516f); //9 Yaw Acceleration
+		insertFloat(0.1675516f); //10 Pitch Acceleration
+		insertFloat(0.907571f); //11 Roll Acceleration
 
-		insertFloat(ship->getMaxPitchRate()); //8 Pitch Acceleration
-		insertFloat(ship->getMaxYawRate()); //9 Yaw Acceleration
-		insertFloat(ship->getMaxRollRate()); //10 Roll Acceleration
-		insertFloat(ship->getActualSpeed()); // This is the current possible max speed
 
-		// look at target
-		insertLong(targetID); //12 target ID that is stored on the ship
-		insertInt(0); //13 m_pilotLookAtTargetSlot
+		insertFloat(50.f); //12 max speed
 
-		ship->getTargetableBitfield()->insertToMessage(this);
+		insertLong(0); //13 const Archive::AutoDeltaVariableCallback<CachedNetworkId,ShipObject::Callbacks::DefaultCallback<ShipObject::Messages::LookAtTargetChanged,CachedNetworkId>,ShipObject>::`vftable'
 
-		ship->getShipComponentMap()->insertToMessage(this); //15
+		insertInt(0); //14 const Archive::AutoDeltaVariableCallback<int,ShipObject::Callbacks::DefaultCallback<ShipObject::Messages::LookAtTargetSlotChanged,int>,ShipObject>::`vftable'
 
-		//TODO: FIX
-		StringBuffer name;
-		name << "@space/ship_names:" << ship->getShipName();
-		insertAscii(name.toString());
+		insertInt(0); //15  const Archive::AutoDeltaVariableCallback<BitArray,ShipObject::Callbacks::DefaultCallback<ShipObject::Messages::TargetableSlotBitfieldChanged,BitArray>,ShipObject>::`vftable'
+		insertInt(0);
 
-		StringBuffer type;
-		type << "@space/space_mobile_type:" << "ship_base";
-		insertAscii(type.toString()); // ship type
+		//components 16
+		insertInt(7); // const Archive::AutoDeltaMap<int,ulong,ShipObject>::`vftable'
+		insertInt(7);
 
-		StringBuffer difficulty;
-		difficulty << "@space/space_difficulty:" << "light";
-		insertAscii(difficulty.toString()); // space_difficulty
+		insertByte(0);
+		insertInt(0);
+		insertInt(0x9abdbfdc); // 0xDC, 0xBF, 0xBD, 0x9A, //rct_prototype
 
-		StringBuffer faction;
-		faction << "@space/space_faction:" << "rebel";
-		insertAscii(faction.toString()); // space_faction
+		insertByte(0);
+		insertInt(1);
+		insertInt(0x35a0c705); // 0x05, 0xC7, 0xA0, 0x35, //eng_prototype
 
-		insertFloat(ship->getFrontShield()); //20 front shield current
-		insertFloat(ship->getRearShield()); //21 back shield current
+		insertByte(0);
+		insertInt(2);
+		insertInt(0xe73217be); // 0xBE, 0x17, 0x32, 0xE7 //shd_prototype
 
-		insertInt(guildID); // Guild ID?
+		insertByte(0);
+		insertInt(4);
+		insertInt(0xe1cb609e); // 0x9E, 0x60, 0xCB, 0xE1, //arm_prototype
+
+		insertByte(0);
+		insertInt(5);
+		insertInt(0xe1cb609e); // 0x9E, 0x60, 0xCB, 0xE1, //arm_prototype
+
+		insertByte(0);
+		insertInt(6);
+		insertInt(0x20ced6ee); // 0xEE, 0xD6, 0xCE, 0x20, //cap_prototype
+
+		insertByte(0);
+		insertInt(0x0f);
+		insertInt(0x2c823c3d); //0x3D, 0x3C, 0x82, 0x2C, //wpn_prototype
+
+		insertAscii(""); //17 const Archive::AutoDeltaVariable<_STL::basic_string<char,_STL::char_traits<char>,_STL::allocator<char>>>::`vftable'
+		insertAscii(""); //18 const Archive::AutoDeltaVariable<_STL::basic_string<char,_STL::char_traits<char>,_STL::allocator<char>>>::`vftable'
+		insertAscii(""); //19 const Archive::AutoDeltaVariable<_STL::basic_string<char,_STL::char_traits<char>,_STL::allocator<char>>>::`vftable'
+		insertAscii(""); //20 const Archive::AutoDeltaVariable<_STL::basic_string<char,_STL::char_traits<char>,_STL::allocator<char>>>::`vftable'
+
+		insertFloat(301.f); //21 front shield current
+		insertFloat(302.f); //22 back shield current
+
+		insertInt(0); //23 const Archive::AutoDeltaVariable<int>::`vftable'
 
 		setSize();
 	}

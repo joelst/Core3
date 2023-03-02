@@ -23,7 +23,7 @@ float VisibilityManager::calculateVisibilityIncrease(CreatureObject* creature) {
 		return visibilityIncrease;
 
 
-	SortedVector<TreeEntry*> closeObjects;
+	SortedVector<QuadTreeEntry*> closeObjects;
 	CloseObjectsVector* closeObjectsVector = (CloseObjectsVector*) creature->getCloseObjects();
 	if (closeObjectsVector == nullptr) {
 		zone->getInRangeObjects(creature->getWorldPositionX(), creature->getWorldPositionY(), 32, &closeObjects, true);
