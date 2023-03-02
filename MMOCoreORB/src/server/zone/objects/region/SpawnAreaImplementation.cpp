@@ -19,7 +19,7 @@
 
 //#define DEBUG_SPAWNING
 
-void SpawnAreaImplementation::notifyPositionUpdate(TreeEntry* entry) {
+void SpawnAreaImplementation::notifyPositionUpdate(QuadTreeEntry* entry) {
 	if (numberOfPlayersInRange <= 0)
 		return;
 
