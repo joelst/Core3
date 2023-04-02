@@ -133,6 +133,7 @@ void GCWManagerImplementation::loadLuaConfig() {
 	wildScanLoginDelay = lua->getGlobalInt("wildScanLoginDelay") * 1000;
 	wildScanChance = lua->getGlobalInt("wildScanChance");
 	crackdownPlayerScanCooldown = lua->getGlobalInt("crackdownPlayerScanCooldown") * 1000;
+	crackdownScannerCooldown = lua->getGlobalInt("crackdownScannerCooldown") * 1000;
 	crackdownContrabandFineCredits = lua->getGlobalInt("crackdownContrabandFineCredits");
 	crackdownContrabandFineFactionPoints = lua->getGlobalInt("crackdownContrabandFineFactionPoints");
 
@@ -1427,6 +1428,24 @@ bool GCWManagerImplementation::areOpposingFactions(int faction1, int faction2) {
 		return false;
 
 	return faction1 != faction2;
+}
+
+bool GCWManagerImplementation::isProperFactionStatus(CreatureObject* player) {
+	if (player == nullptr || !player->isPlayerCreature())
+		return false;
+
+	if (ConfigManager::instance()->useCovertOvertSystem()) {
+		PlayerObject* ghost = player->getPlayerObject();
+
+		if (ghost != nullptr) {
+			Locker lock(player);
+			ghost->updateLastGcwPvpCombatActionTimestamp();
+		}
+
+		return true;
+	}
+
+	return player->getFactionStatus() > FactionStatus::ONLEAVE;
 }
 
 void GCWManagerImplementation::awardSlicingXP(CreatureObject* creature, const String& xpType, int val) {

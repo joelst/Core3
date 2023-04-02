@@ -194,6 +194,24 @@ void PlanetManagerImplementation::loadLuaConfig() {
 	if ((starportLandingTime = lua->getGlobalInt("starportLandingTime")) <= 0)
 		starportLandingTime = 14;
 
+#if DEBUG_TRAVEL
+	// Allow override in config-local for testing
+	shuttleportAwayTime = ConfigManager::instance()->getInt("Core3.PlanetManager.ShuttleportAwayTime", shuttleportAwayTime);
+	shuttleportLandedTime = ConfigManager::instance()->getInt("Core3.PlanetManager.ShuttleportLandedTime", shuttleportLandedTime);
+	shuttleportLandingTime = ConfigManager::instance()->getInt("Core3.PlanetManager.ShuttleportLandingTime", shuttleportLandingTime);
+	starportAwayTime = ConfigManager::instance()->getInt("Core3.PlanetManager.StarportAwayTime", starportAwayTime);
+	starportLandedTime = ConfigManager::instance()->getInt("Core3.PlanetManager.StarportLandedTime", starportLandedTime);
+	starportLandingTime = ConfigManager::instance()->getInt("Core3.PlanetManager.StarportLandingTime", starportLandingTime);
+	info(true) << "\033[42;30m" << __FUNCTION__ << "()"
+		<< ": shuttleportAwayTime=" << shuttleportAwayTime
+		<< "; shuttleportLandedTime=" << shuttleportLandedTime
+		<< "; shuttleportLandingTime=" << shuttleportLandingTime
+		<< "; starportAwayTime=" << starportAwayTime
+		<< "; starportLandedTime=" << starportLandedTime
+		<< "; starportLandingTime=" << starportLandingTime
+		<< "\033[0m";
+#endif
+
 	delete lua;
 	lua = nullptr;
 }
@@ -654,14 +672,14 @@ void PlanetManagerImplementation::sendPlanetTravelPointListResponse(CreatureObje
 
 PlanetTravelPoint* PlanetManagerImplementation::getNearestPlanetTravelPoint(SceneObject* object, float searchrange) {
 #if DEBUG_TRAVEL
-	StringBuffer callDesc;
+	auto callDesc = info(true);
 
-	callDesc << "getNearestPlanetTravelPoint("
+	callDesc << "\033[45;30m" << __FUNCTION__ << "(object="
 			<< object->getObjectNameStringIdName()
 			<< ":" << object->getObjectID()
-			<< ", " << searchrange
+			<< ", searchrange=" << searchrange
 			<< ") @ " << object->getWorldPosition().toString()
-			<< "\n";
+			<< "\033[0m\n\t";
 #endif
 
 	Reference<PlanetTravelPoint*> planetTravelPoint = getNearestPlanetTravelPoint(object->getWorldPosition(), searchrange);
@@ -669,11 +687,12 @@ PlanetTravelPoint* PlanetManagerImplementation::getNearestPlanetTravelPoint(Scen
 #if DEBUG_TRAVEL
 
 	if(planetTravelPoint == nullptr)
-		callDesc << ": DID NOT FIND POINT IN RANGE \n";
+		callDesc << "\033[41;30mDID NOT FIND POINT IN RANGE \n";
 	else
-		callDesc << ": returning: " << planetTravelPoint->toString() << "\n";
+		callDesc << "\033[42;30mReturning: " << planetTravelPoint->toString() << "\n";
 
-	info(callDesc, true);
+	callDesc << "\033[0m";
+	callDesc.flush();
 #endif
 	return planetTravelPoint;
 }
@@ -1195,6 +1214,12 @@ bool PlanetManagerImplementation::isInRangeWithPoi(float x, float y, float range
 }
 
 bool PlanetManagerImplementation::isInObjectsNoBuildZone(float x, float y, float extraMargin, bool checkFootprint) {
+	auto hit = findObjectInNoBuildZone(x, y, extraMargin, checkFootprint);
+
+	return hit != nullptr;
+}
+
+Reference<SceneObject* > PlanetManagerImplementation::findObjectInNoBuildZone(float x, float y, float extraMargin, bool checkFootprint) {
 	SortedVector<QuadTreeEntry*> closeObjects;
 
 	Vector3 targetPos(x, y, zone->getHeight(x, y));
@@ -1202,7 +1227,7 @@ bool PlanetManagerImplementation::isInObjectsNoBuildZone(float x, float y, float
 	zone->getInRangeObjects(x, y, 512, &closeObjects, true, false);
 
 	for (int i = 0; i < closeObjects.size(); ++i) {
-		SceneObject* obj = static_cast<SceneObject*>(closeObjects.get(i));
+		Reference<SceneObject*> obj = static_cast<SceneObject*>(closeObjects.get(i));
 
 		SharedObjectTemplate* objectTemplate = obj->getObjectTemplate();
 
@@ -1217,20 +1242,20 @@ bool PlanetManagerImplementation::isInObjectsNoBuildZone(float x, float y, float
 				Vector3 objWorldPos = obj->getWorldPosition();
 
 				if (objWorldPos.squaredDistanceTo(targetPos) < radius * radius) {
-					return true;
+					return obj;
 				}
 			}
 
 			// Check if it's within a structure's footprint
-			if (objectTemplate->isSharedStructureObjectTemplate()) {
-				if (checkFootprint && StructureManager::instance()->isInStructureFootprint(cast<StructureObject*>(obj), x, y, extraMargin)) {
-					return true;
+			if (checkFootprint && objectTemplate->isSharedStructureObjectTemplate()) {
+				if (StructureManager::instance()->isInStructureFootprint(cast<StructureObject*>(obj.get()), x, y, extraMargin)) {
+					return obj;
 				}
 			}
 		}
 	}
 
-	return false;
+	return nullptr;
 }
 
 bool PlanetManagerImplementation::isSpawningPermittedAt(float x, float y, float margin, bool worldSpawnArea) {
@@ -1355,7 +1380,7 @@ Reference<SceneObject*> PlanetManagerImplementation::findObjectTooCloseToDecorat
 
 	for (int i = 0; i < closeObjects.size(); ++i) {
 
-		ManagedReference<SceneObject*> obj = cast<SceneObject*>(closeObjects.get(i).get());
+		Reference<SceneObject*> obj = cast<SceneObject*>(closeObjects.get(i).get());
 
 		if(obj == nullptr || obj->isCreatureObject() || obj->getObjectTemplate() == nullptr)
 			continue;
